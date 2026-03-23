@@ -1,0 +1,95 @@
+import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import dbConnect from '@/lib/db';
+import UserProgress from '@/models/UserProgress';
+import mongoose from 'mongoose';
+
+export async function GET(request: Request) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const roadmapId = searchParams.get('roadmapId');
+
+  try {
+    await dbConnect();
+    if (roadmapId) {
+      const progress = await UserProgress.findOne({
+        userId: (session.user as any).id,
+        roadmapId: new mongoose.Types.ObjectId(roadmapId),
+      });
+      return NextResponse.json(progress?.completedArticles || []);
+    } else {
+       // All progress
+       const allProgress = await UserProgress.find({ userId: (session.user as any).id });
+       return NextResponse.json(allProgress);
+    }
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { articleId, roadmapId, completed } = await request.json();
+
+  try {
+    await dbConnect();
+    const userId = (session.user as any).id;
+    const email = session.user.email;
+    const resolvedRoadmapId = roadmapId 
+      ? new mongoose.Types.ObjectId(roadmapId) 
+      : new mongoose.Types.ObjectId('000000000000000000000000');
+    
+    console.log(`[DEBUG] API Progress: Updating for user: ${userId}, email: ${email}, roadmap: ${resolvedRoadmapId}, article: ${articleId}, completed: ${completed}`);
+    
+    // 1. Try to find an existing progress record for this specific user/roadmap
+    // We check both current ID and verified Email
+    let progressDoc = await UserProgress.findOne({
+      $or: [
+        { userId, roadmapId: resolvedRoadmapId },
+        { email: email, roadmapId: resolvedRoadmapId }
+      ].filter(f => f.userId || f.email)
+    });
+
+    const updateData = {
+      userId,
+      email,
+      lastUpdated: Date.now()
+    };
+
+    if (completed) {
+      if (progressDoc) {
+        // Update existing
+        await UserProgress.findByIdAndUpdate(progressDoc._id, {
+          ...updateData,
+          $addToSet: { completedArticles: new mongoose.Types.ObjectId(articleId) }
+        });
+      } else {
+        // Create new
+        await UserProgress.create({
+          ...updateData,
+          roadmapId: resolvedRoadmapId,
+          completedArticles: [new mongoose.Types.ObjectId(articleId)]
+        });
+      }
+    } else {
+      if (progressDoc) {
+        await UserProgress.findByIdAndUpdate(progressDoc._id, {
+          ...updateData,
+          $pull: { completedArticles: new mongoose.Types.ObjectId(articleId) }
+        });
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

@@ -1,0 +1,233 @@
+import dbConnect from '@/lib/db';
+export const dynamic = 'force-dynamic';
+import Article from '@/models/Article';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { notFound } from 'next/navigation';
+import { Calendar, Tag, ChevronLeft, Layers, Signal } from 'lucide-react';
+import Link from 'next/link';
+import ProgressButton from '@/components/roadmap/ProgressButton';
+import { auth } from '@/auth';
+import UserProgress from '@/models/UserProgress';
+import mongoose from 'mongoose';
+
+import Roadmap from '@/models/Roadmap';
+import LessonNavigation from '@/components/roadmap/LessonNavigation';
+import FocusToggle from '@/components/FocusToggle';
+import ArticleContentWrapper from '@/components/ArticleContentWrapper';
+
+export default async function ArticleDetail({ 
+  params,
+  searchParams
+}: { 
+  params: Promise<{ slug: string }>,
+  searchParams: Promise<{ roadmap?: string }>
+}) {
+  const { slug } = await params;
+  const { roadmap: roadmapSlug } = await searchParams;
+  const session = await auth();
+  
+  await dbConnect();
+  const article = await Article.findOne({ slug }).lean();
+
+  if (!article) {
+    notFound();
+  }
+
+  // Fetch progress and roadmap context
+  let roadmapId: string | null = null;
+  let isCompleted = false;
+  let prevLesson = null;
+  let nextLesson = null;
+
+  if (roadmapSlug) {
+    const roadmap = await Roadmap.findOne({ slug: roadmapSlug }).lean();
+    if (roadmap) {
+      roadmapId = roadmap._id.toString();
+      const items = (roadmap.items as any[]) || [];
+      const currentIndex = items.findIndex(item => {
+        const itemId = item.articleId?._id || item.articleId;
+        return itemId.toString() === article._id.toString();
+      });
+      
+      if (currentIndex > 0) {
+        const prevId = items[currentIndex - 1].articleId?._id || items[currentIndex - 1].articleId;
+        const prevArt = await Article.findById(prevId).select('title slug').lean();
+        if (prevArt) prevLesson = { title: prevArt.title, slug: prevArt.slug };
+      }
+      
+      if (currentIndex !== -1 && currentIndex < items.length - 1) {
+        const nextId = items[currentIndex + 1].articleId?._id || items[currentIndex + 1].articleId;
+        const nextArt = await Article.findById(nextId).select('title slug').lean();
+        if (nextArt) nextLesson = { title: nextArt.title, slug: nextArt.slug };
+      }
+    }
+  }
+
+  if (session?.user) {
+    const userId = (session.user as any).id;
+    const providerId = (session.user as any).providerId;
+    const email = session.user.email;
+    console.log(`[DEBUG] ArticleDetail: Checking progress for user: ${userId}, email: ${email}, article: ${article._id}`);
+    
+    // Check if article is completed in ANY roadmap for this user (global stable search)
+    const progress = await UserProgress.findOne({
+      $or: [
+        { userId: { $in: [userId, providerId].filter(Boolean) } },
+        { email: email }
+      ],
+      completedArticles: article._id
+    });
+    isCompleted = !!progress;
+    console.log(`[DEBUG] ArticleDetail: isCompleted result: ${isCompleted}`);
+  }
+
+  const seriesArticles = article.series 
+    ? await Article.find({ 
+        series: article.series, 
+        isPublished: true,
+        _id: { $ne: article._id } 
+      })
+      .select('title slug difficulty')
+      .limit(5)
+      .lean()
+    : [];
+
+  const formattedDate = new Date(article.createdAt).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return 'text-green-500 bg-green-500/10 ring-green-500/20';
+      case 'Intermediate': return 'text-yellow-500 bg-yellow-500/10 ring-yellow-500/20';
+      case 'Advanced': return 'text-red-500 bg-red-500/10 ring-red-500/20';
+      default: return 'text-blue-500 bg-blue-500/10 ring-blue-500/20';
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-6xl px-6 py-12 lg:px-8">
+        <Link
+          href={roadmapSlug ? `/roadmaps/${roadmapSlug}` : "/"}
+          className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          {roadmapSlug ? 'Back to roadmap' : 'Back to articles'}
+        </Link>
+
+        <FocusToggle />
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <ArticleContentWrapper>
+              <article>
+              <header className="mb-12">
+                <div className="mb-6 flex flex-wrap items-center gap-4">
+                  <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 ring-1 ring-inset ring-blue-500/20">
+                    {article.category}
+                  </span>
+                  
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${getDifficultyColor(article.difficulty || 'Intermediate')}`}>
+                    <Signal className="h-3 w-3" />
+                    {article.difficulty || 'Intermediate'}
+                  </span>
+
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    {formattedDate}
+                  </div>
+                </div>
+                
+                {article.series && (
+                  <div className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-blue-500">
+                    <Layers className="h-4 w-4" />
+                    Part of: {article.series}
+                  </div>
+                )}
+
+                <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+                  {article.title}
+                </h1>
+                
+                <p className="text-xl leading-8 text-muted-foreground">
+                  {article.excerpt}
+                </p>
+              </header>
+
+              <div className="border-t border-border pt-12">
+                <MarkdownRenderer content={article.content} />
+              </div>
+
+              {roadmapSlug && (
+                <LessonNavigation 
+                  prevLesson={prevLesson} 
+                  nextLesson={nextLesson} 
+                  isCompleted={isCompleted} 
+                  roadmapId={roadmapSlug}
+                />
+              )}
+
+              {/* Progress and Actions */}
+              <div className="mt-16 border-t border-border pt-12 bg-muted/20 rounded-3xl p-8 flex flex-col items-center text-center">
+                 <h3 className="text-2xl font-bold text-foreground mb-4">Finished this lesson?</h3>
+                 <p className="text-muted-foreground mb-8 max-w-md">Mark this lesson as completed to track your learning progress on the roadmap.</p>
+                 <ProgressButton 
+                    articleId={article._id.toString()} 
+                    initialCompleted={isCompleted} 
+                 />
+              </div>
+
+              <footer className="mt-16 border-t border-border pt-8 flex flex-wrap gap-2">
+                  {article.tags.map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border"
+                    >
+                      <Tag className="h-3 w-3" />
+                      {tag}
+                    </span>
+                  ))}
+              </footer>
+            </article>
+          </ArticleContentWrapper>
+        </div>
+
+          {/* Sidebar */}
+          <aside className="lg:col-span-1">
+            {seriesArticles.length > 0 && (
+              <div className="sticky top-24 space-y-8">
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                  <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-foreground">
+                    <Layers className="h-4 w-4 text-blue-500" />
+                    Series Progress
+                  </h3>
+                  <div className="space-y-4">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">{article.series}</p>
+                    <div className="space-y-3">
+                      {seriesArticles.map((sa: any) => (
+                        <Link 
+                          key={sa.slug} 
+                          href={`/articles/${sa.slug}`}
+                          className="group block"
+                        >
+                          <p className="text-sm font-medium text-foreground group-hover:text-blue-500 transition-colors line-clamp-2">
+                            {sa.title}
+                          </p>
+                          <span className="text-[10px] text-muted-foreground">{sa.difficulty}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
