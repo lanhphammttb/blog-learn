@@ -14,6 +14,8 @@ import Roadmap from '@/models/Roadmap';
 import LessonNavigation from '@/components/roadmap/LessonNavigation';
 import FocusToggle from '@/components/FocusToggle';
 import ArticleContentWrapper from '@/components/ArticleContentWrapper';
+import InteractiveMarkdown from '@/components/InteractiveMarkdown';
+import TaskSidebar from '@/components/TaskSidebar';
 
 export default async function ArticleDetail({ 
   params,
@@ -36,6 +38,8 @@ export default async function ArticleDetail({
   // Fetch progress and roadmap context
   let roadmapId: string | null = null;
   let isCompleted = false;
+  let initialCompletedTasks: number[] = [];
+  let userStats = { xp: 0, streak: 0 };
   let prevLesson = null;
   let nextLesson = null;
 
@@ -67,19 +71,40 @@ export default async function ArticleDetail({
     const userId = (session.user as any).id;
     const providerId = (session.user as any).providerId;
     const email = session.user.email;
-    console.log(`[DEBUG] ArticleDetail: Checking progress for user: ${userId}, email: ${email}, article: ${article._id}`);
     
-    // Check if article is completed in ANY roadmap for this user (global stable search)
+    // STRICT Query: must match roadmapId if provided
     const progress = await UserProgress.findOne({
       $or: [
         { userId: { $in: [userId, providerId].filter(Boolean) } },
         { email: email }
       ],
-      completedArticles: article._id
-    });
-    isCompleted = !!progress;
-    console.log(`[DEBUG] ArticleDetail: isCompleted result: ${isCompleted}`);
+      roadmapId: roadmapId ? new mongoose.Types.ObjectId(roadmapId) : { $in: [null, new mongoose.Types.ObjectId("000000000000000000000000")] }
+    }).lean();
+
+    if (progress) {
+      isCompleted = (progress.completedArticles || []).some(
+        (id: any) => id.toString() === article._id.toString()
+      );
+
+      const articleTaskRecord = (progress.articleTasks || []).find(
+        (at: any) => at.articleId.toString() === article._id.toString()
+      );
+      if (articleTaskRecord) {
+        initialCompletedTasks = articleTaskRecord.taskIndices;
+      }
+
+      userStats = {
+        xp: progress.xp || 0,
+        streak: progress.streak || 0
+      };
+    }
   }
+
+  const taskRegex = /[*-] \[[ xX]\] (.*)/g;
+  const tasks = [...article.content.matchAll(taskRegex)].map((match, index) => ({
+    index,
+    label: match[1].trim()
+  }));
 
   const seriesArticles = article.series 
     ? await Article.find({ 
@@ -121,7 +146,6 @@ export default async function ArticleDetail({
         <FocusToggle />
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-          {/* Main Content */}
           <div className="lg:col-span-3">
             <ArticleContentWrapper>
               <article>
@@ -159,7 +183,12 @@ export default async function ArticleDetail({
               </header>
 
               <div className="border-t border-border pt-12">
-                <MarkdownRenderer content={article.content} />
+                <InteractiveMarkdown 
+                  content={article.content} 
+                  articleId={article._id.toString()}
+                  roadmapId={roadmapId}
+                  initialCompletedTasks={initialCompletedTasks}
+                />
               </div>
 
               {roadmapSlug && (
@@ -171,7 +200,6 @@ export default async function ArticleDetail({
                 />
               )}
 
-              {/* Progress and Actions */}
               <div className="mt-16 border-t border-border pt-12 bg-muted/20 rounded-3xl p-8 flex flex-col items-center text-center">
                  <h3 className="text-2xl font-bold text-foreground mb-4">Finished this lesson?</h3>
                  <p className="text-muted-foreground mb-8 max-w-md">Mark this lesson as completed to track your learning progress on the roadmap.</p>
@@ -193,13 +221,22 @@ export default async function ArticleDetail({
                   ))}
               </footer>
             </article>
-          </ArticleContentWrapper>
-        </div>
+            </ArticleContentWrapper>
+          </div>
 
-          {/* Sidebar */}
           <aside className="lg:col-span-1">
-            {seriesArticles.length > 0 && (
-              <div className="sticky top-24 space-y-8">
+            <div className="sticky top-24 space-y-8">
+              {tasks.length > 0 && (
+                <TaskSidebar 
+                  tasks={tasks} 
+                  initialCompletedIndices={initialCompletedTasks} 
+                  initialStats={userStats}
+                  roadmapId={roadmapId}
+                  articleId={article._id.toString()}
+                />
+              )}
+              
+              {seriesArticles.length > 0 && (
                 <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                   <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-foreground">
                     <Layers className="h-4 w-4 text-blue-500" />
@@ -223,8 +260,8 @@ export default async function ArticleDetail({
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </aside>
         </div>
       </div>

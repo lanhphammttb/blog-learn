@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { 
   Save, X, Sparkles, ChevronLeft, Loader2, Eye, Edit3,
   Bold, Italic, Link as LinkIcon, List, Type, 
-  BookOpen, Hash, Layers
+  BookOpen, Hash, Layers, Table, CheckSquare
 } from 'lucide-react';
 import Link from 'next/link';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
@@ -58,17 +58,72 @@ export default function EditArticle() {
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const beforeText = text.substring(0, start);
-    const selectedText = text.substring(start, end);
-    const afterText = text.substring(end);
-
-    const newText = beforeText + before + selectedText + after + afterText;
-    setFormData({ ...formData, content: newText });
+    
+    setFormData(prev => {
+      const text = prev.content;
+      const beforeText = text.substring(0, start);
+      const selectedText = text.substring(start, end);
+      const afterText = text.substring(end);
+      return { ...prev, content: beforeText + before + selectedText + after + afterText };
+    });
     
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + before.length, end + before.length);
+    }, 0);
+  };
+
+  const insertTable = () => {
+    const tableTemplate = `
+| Header 1 | Header 2 |
+| :--- | :--- |
+| Row 1 Col 1 | Row 1 Col 2 |
+| Row 2 Col 1 | Row 2 Col 2 |
+`;
+    insertText(tableTemplate);
+  };
+
+  const insertTaskList = () => {
+    const taskTemplate = `
+- [ ] Task 1
+- [ ] Task 2
+- [ ] Task 3
+`;
+    insertText(taskTemplate);
+  };
+
+  const insertFromExcel = () => {
+    const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
+    const start = textarea?.selectionStart || 0;
+    const end = textarea?.selectionEnd || 0;
+
+    const data = prompt('Paste your Excel/Sheets data here:');
+    if (!data) return;
+
+    const rows = data.trim().split('\n');
+    if (rows.length === 0) return;
+
+    const markdownRows = rows.map(row => {
+      const cells = row.split(/\t| {2,}/).map(c => c.trim()).filter(c => c !== '');
+      return `| ${cells.join(' | ')} |`;
+    });
+
+    const colCounts = rows.map(row => row.split(/\t| {2,}/).filter(c => c.trim() !== '').length);
+    const columnCount = Math.max(...colCounts);
+    const separator = `| ${Array(columnCount).fill(':---').join(' | ')} |`;
+    
+    const tableResult = `\n${markdownRows[0]}\n${separator}\n${markdownRows.slice(1).join('\n')}\n`;
+    
+    setFormData(prev => {
+      const text = prev.content;
+      const beforeText = text.substring(0, start);
+      const afterText = text.substring(end);
+      return { ...prev, content: beforeText + tableResult + afterText };
+    });
+    
+    setTimeout(() => {
+      textarea?.focus();
+      textarea?.setSelectionRange(start + tableResult.length, start + tableResult.length);
     }, 0);
   };
 
@@ -186,6 +241,11 @@ export default function EditArticle() {
                   <button type="button" onClick={() => insertText('# ')} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="Heading"><Type className="h-4 w-4" /></button>
                   <button type="button" onClick={() => insertText('- ')} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="List"><List className="h-4 w-4" /></button>
                   <button type="button" onClick={() => insertText('[', '](url)')} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="Link"><LinkIcon className="h-4 w-4" /></button>
+                  <button type="button" onClick={insertTable} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="Table"><Table className="h-4 w-4" /></button>
+                  <button type="button" onClick={insertTaskList} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="Task List"><CheckSquare className="h-4 w-4" /></button>
+                  <button type="button" onClick={insertFromExcel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold hover:bg-green-500/20 transition-all">
+                     Paster from Excel
+                  </button>
                   <div className="mx-2 h-4 w-px bg-border" />
                   <button type="button" onClick={addVocabularyTemplate} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-500/20 transition-all">
                     + Vocabulary
