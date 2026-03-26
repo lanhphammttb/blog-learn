@@ -68,11 +68,12 @@ export default function ProgressButton({ articleId, roadmapId, initialCompleted 
   const toggleProgress = async () => {
     if (status === 'unauthenticated') {
       const guestProgress: string[] = JSON.parse(localStorage.getItem('guest_progress') || '[]');
-      let newProgress;
+      let newProgress: string[];
       if (completed) {
         newProgress = guestProgress.filter((id: string) => id !== articleId);
       } else {
-        newProgress = [...guestProgress, articleId];
+        // Prevent duplicates
+        newProgress = guestProgress.includes(articleId) ? guestProgress : [...guestProgress, articleId];
       }
       localStorage.setItem('guest_progress', JSON.stringify(newProgress));
       setCompleted(!completed);

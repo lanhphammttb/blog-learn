@@ -33,7 +33,7 @@ export default function RoadmapCanvas({ roadmap, completedArticleIds: initialCom
   useEffect(() => {
     // ONLY use guest progress if NOT logged in
     if (!isLoggedIn) {
-      const guestProgress: string[] = [...new Set(JSON.parse(localStorage.getItem('guest_progress') || '[]'))];
+      const guestProgress: string[] = [...new Set<string>(JSON.parse(localStorage.getItem('guest_progress') || '[]') as string[])];
       // Filter guest progress to only articles in this roadmap
       const filteredProgress = guestProgress.filter(id => roadmapArticleIdSet.has(id));
       if (filteredProgress.length > 0) {
@@ -44,7 +44,7 @@ export default function RoadmapCanvas({ roadmap, completedArticleIds: initialCom
     // Listen for progress updates from buttons
     const handleUpdate = () => {
       if (!isLoggedIn) {
-        const updatedGuestProgress: string[] = [...new Set(JSON.parse(localStorage.getItem('guest_progress') || '[]'))];
+        const updatedGuestProgress: string[] = [...new Set<string>(JSON.parse(localStorage.getItem('guest_progress') || '[]') as string[])];
         const filtered = updatedGuestProgress.filter(id => roadmapArticleIdSet.has(id));
         setCompletedArticleIds(filtered);
       }

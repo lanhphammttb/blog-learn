@@ -14,7 +14,7 @@ export default function ProgressCircle({ serverPercent, roadmapArticleIds, isLog
   useEffect(() => {
     if (!isLoggedIn) {
       // Guest: check localStorage (deduplicate using Set)
-      const guestProgress: string[] = [...new Set(JSON.parse(localStorage.getItem('guest_progress') || '[]'))];
+      const guestProgress: string[] = [...new Set<string>(JSON.parse(localStorage.getItem('guest_progress') || '[]') as string[])];
       const roadmapSet = new Set(roadmapArticleIds);
       const completedInRoadmap = guestProgress.filter(id => roadmapSet.has(id)).length;
       const total = roadmapArticleIds.length;
@@ -23,7 +23,7 @@ export default function ProgressCircle({ serverPercent, roadmapArticleIds, isLog
 
     const handleUpdate = () => {
       if (!isLoggedIn) {
-        const guestProgress: string[] = [...new Set(JSON.parse(localStorage.getItem('guest_progress') || '[]'))];
+        const guestProgress: string[] = [...new Set<string>(JSON.parse(localStorage.getItem('guest_progress') || '[]') as string[])];
         const roadmapSet = new Set(roadmapArticleIds);
         const completedInRoadmap = guestProgress.filter(id => roadmapSet.has(id)).length;
         const total = roadmapArticleIds.length;
