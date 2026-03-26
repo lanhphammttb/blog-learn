@@ -1,35 +1,48 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { unlockAchievement } from '@/components/dashboard/AchievementToast';
 
 interface ProgressButtonProps {
   articleId: string;
-  roadmapId?: string;
+  roadmapId?: string | null;
   initialCompleted?: boolean;
 }
 
 export default function ProgressButton({ articleId, roadmapId, initialCompleted = false }: ProgressButtonProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [completed, setCompleted] = useState(initialCompleted);
   const [loading, setLoading] = useState(false);
 
-  const toggleProgress = async () => {
-    if (!session) {
-      // For guests, use local storage
-      const guestProgress = JSON.parse(localStorage.getItem('guest_progress') || '[]');
-      let newProgress;
-      if (completed) {
-        newProgress = guestProgress.filter((id: string) => id !== articleId);
-      } else {
-        newProgress = [...guestProgress, articleId];
+  // For guests: hydrate completion state from localStorage after mount
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      const guestProgress: string[] = JSON.parse(localStorage.getItem('guest_progress') || '[]');
+      if (guestProgress.includes(articleId)) {
+        setCompleted(true);
       }
-      localStorage.setItem('guest_progress', JSON.stringify(newProgress));
-      setCompleted(!completed);
+    }
+  }, [status, articleId]);
 
-      // Trigger a custom event for other components to listen
+  // Also sync from server-side initial state when session changes
+  useEffect(() => {
+    if (status === 'authenticated') {
+      setCompleted(initialCompleted);
+    }
+  }, [status, initialCompleted]);
+
+  const markAsCompleted = useCallback(async () => {
+    if (completed || loading) return;
+
+    if (status === 'unauthenticated') {
+      const guestProgress: string[] = JSON.parse(localStorage.getItem('guest_progress') || '[]');
+      if (!guestProgress.includes(articleId)) {
+        guestProgress.push(articleId);
+        localStorage.setItem('guest_progress', JSON.stringify(guestProgress));
+      }
+      setCompleted(true);
       window.dispatchEvent(new Event('progressUpdated'));
       return;
     }
@@ -39,7 +52,40 @@ export default function ProgressButton({ articleId, roadmapId, initialCompleted 
       const res = await fetch('/api/user/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ articleId, roadmapId, completed: !completed }),
+        body: JSON.stringify({ articleId, roadmapId: roadmapId || undefined, completed: true }),
+      });
+      if (res.ok) {
+        unlockAchievement('first-lesson', 'Early Bird', 'You completed your first lesson! 🐣');
+        setCompleted(true);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [completed, loading, status, articleId, roadmapId]);
+
+  const toggleProgress = async () => {
+    if (status === 'unauthenticated') {
+      const guestProgress: string[] = JSON.parse(localStorage.getItem('guest_progress') || '[]');
+      let newProgress;
+      if (completed) {
+        newProgress = guestProgress.filter((id: string) => id !== articleId);
+      } else {
+        newProgress = [...guestProgress, articleId];
+      }
+      localStorage.setItem('guest_progress', JSON.stringify(newProgress));
+      setCompleted(!completed);
+      window.dispatchEvent(new Event('progressUpdated'));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/user/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articleId, roadmapId: roadmapId || undefined, completed: !completed }),
       });
       if (res.ok) {
         if (!completed) {
@@ -53,6 +99,15 @@ export default function ProgressButton({ articleId, roadmapId, initialCompleted 
       setLoading(false);
     }
   };
+
+  // Listen for auto-complete event from InteractiveMarkdown (all tasks done)
+  useEffect(() => {
+    const handleAutoComplete = () => {
+      markAsCompleted();
+    };
+    window.addEventListener('lesson-auto-complete', handleAutoComplete);
+    return () => window.removeEventListener('lesson-auto-complete', handleAutoComplete);
+  }, [markAsCompleted]);
 
   return (
     <button

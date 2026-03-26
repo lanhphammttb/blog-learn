@@ -7,6 +7,7 @@ import {
   Sparkles, Flame
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface LeaderboardUser {
   id: string;
@@ -68,7 +69,7 @@ export default function CommunityPage() {
                     <Medal className="h-6 w-6" />
                   </div>
                   <div className="h-20 w-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-3xl mb-4 font-black text-muted-foreground">
-                    {users[1].image ? <img src={users[1].image} className="h-full w-full rounded-2xl object-cover" /> : users[1].name[0]}
+                    {users[1].image ? <Image src={users[1].image} alt={users[1].name} width={80} height={80} className="h-full w-full rounded-2xl object-cover" /> : users[1].name[0]}
                   </div>
                   <h3 className="font-bold text-lg mb-1 truncate w-full">{users[1].name}</h3>
                   <div className="flex items-center gap-2 text-zinc-500 font-bold text-sm">
@@ -85,7 +86,7 @@ export default function CommunityPage() {
                     <Crown className="h-8 w-8" />
                   </div>
                   <div className="h-24 w-24 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center text-4xl mb-6 font-black ring-4 ring-white/10">
-                    {users[0].image ? <img src={users[0].image} className="h-full w-full rounded-3xl object-cover" /> : users[0].name[0]}
+                    {users[0].image ? <Image src={users[0].image} alt={users[0].name} width={96} height={96} className="h-full w-full rounded-3xl object-cover" /> : users[0].name[0]}
                   </div>
                   <h3 className="font-black text-2xl mb-2 truncate w-full">{users[0].name}</h3>
                   <div className="flex items-center gap-2 text-blue-100 font-bold text-lg">
@@ -103,7 +104,7 @@ export default function CommunityPage() {
                     <Medal className="h-6 w-6" />
                   </div>
                   <div className="h-20 w-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-3xl mb-4 font-black text-muted-foreground">
-                    {users[2].image ? <img src={users[2].image} className="h-full w-full rounded-2xl object-cover" /> : users[2].name[0]}
+                    {users[2].image ? <Image src={users[2].image} alt={users[2].name} width={80} height={80} className="h-full w-full rounded-2xl object-cover" /> : users[2].name[0]}
                   </div>
                   <h3 className="font-bold text-lg mb-1 truncate w-full">{users[2].name}</h3>
                   <div className="flex items-center gap-2 text-zinc-500 font-bold text-sm">
@@ -163,7 +164,7 @@ export default function CommunityPage() {
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
                           <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center text-lg font-black text-muted-foreground shadow-sm">
-                            {user.image ? <img src={user.image} className="h-full w-full rounded-xl object-cover" /> : user.name[0]}
+                            {user.image ? <Image src={user.image} alt={user.name} width={48} height={48} className="h-full w-full rounded-xl object-cover" /> : user.name[0]}
                           </div>
                           <div>
                             <p className="font-bold text-foreground leading-none mb-1">{user.name}</p>

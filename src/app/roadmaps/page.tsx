@@ -1,6 +1,6 @@
 import dbConnect from '@/lib/db';
 import Roadmap from '@/models/Roadmap';
-import { Layers, Rocket, Target, Users, ArrowRight, Signal } from 'lucide-react';
+import { Layers, Rocket, Target, ArrowRight, Signal } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function RoadmapsPage() {
@@ -37,8 +37,8 @@ export default async function RoadmapsPage() {
                       {roadmap.difficulty}
                     </span>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                       <Users className="h-4 w-4" />
-                       1.2k learners
+                       <Layers className="h-4 w-4" />
+                       {roadmap.items.length} lessons
                     </div>
                   </div>
 

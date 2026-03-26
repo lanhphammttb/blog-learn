@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { 
   BarChart, BookOpen, Layers, MessageSquare, Plus, Search, 
-  Trash2, ExternalLink, Settings, TrendingUp, Filter, CheckCircle, Clock
+  Trash2, ExternalLink, Settings, TrendingUp, Filter, CheckCircle, Clock, Loader2, Users
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -13,11 +13,29 @@ export default function AdminDashboard() {
   const [roadmaps, setRoadmaps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'articles' | 'roadmaps'>('articles');
+  const [totalCompletions, setTotalCompletions] = useState(0);
+  const [totalLearners, setTotalLearners] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
     fetchData();
   }, [activeTab]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/community/leaderboard');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setTotalLearners(data.length);
+            setTotalCompletions(data.reduce((acc: number, u: any) => acc + u.totalLessons, 0));
+          }
+        }
+      } catch (e) {}
+    };
+    fetchStats();
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -79,11 +97,11 @@ export default function AdminDashboard() {
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-500/10 text-green-600">
-                <TrendingUp className="h-6 w-6" />
+                <Users className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Views</p>
-                <p className="text-2xl font-bold">12.4k</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Learners</p>
+                <p className="text-2xl font-bold">{totalLearners}</p>
               </div>
             </div>
           </div>
@@ -94,7 +112,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Completions</p>
-                <p className="text-2xl font-bold">842</p>
+                <p className="text-2xl font-bold">{totalCompletions}</p>
               </div>
             </div>
           </div>
@@ -234,28 +252,3 @@ export default function AdminDashboard() {
   );
 }
 
-function Loader2(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 2v4" />
-      <path d="m16.2 7.8 2.9-2.9" />
-      <path d="M18 12h4" />
-      <path d="m16.2 16.2 2.9 2.9" />
-      <path d="M12 18v4" />
-      <path d="m4.9 19.1 2.9-2.9" />
-      <path d="M2 12h4" />
-      <path d="m4.9 4.9 2.9 2.9" />
-    </svg>
-  );
-}

@@ -1,17 +1,29 @@
 import Link from 'next/link';
-import { Search, Sparkles, ArrowRight, Layers, BookOpen, Rocket, Target } from 'lucide-react';
+import { Sparkles, ArrowRight, BookOpen, Rocket, Target } from 'lucide-react';
 import dbConnect from '@/lib/db';
 import Article from '@/models/Article';
 import ArticleCard from '@/components/ArticleCard';
 import Roadmap from '@/models/Roadmap';
+import SearchBar from '@/components/SearchBar';
+import Pagination from '@/components/Pagination';
 
-export default async function Home() {
+const ARTICLES_PER_PAGE = 9;
+
+export default async function Home({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const { page } = await searchParams;
+  const currentPage = Math.max(1, parseInt(page || '1', 10));
+
   await dbConnect();
+
+  // Count total published articles for pagination
+  const totalArticles = await Article.countDocuments({ isPublished: true });
+  const totalPages = Math.ceil(totalArticles / ARTICLES_PER_PAGE);
   
-  // Fetch all published articles
+  // Fetch paginated articles
   const allArticles = await Article.find({ isPublished: true })
     .sort({ createdAt: -1 })
-    .limit(12)
+    .skip((currentPage - 1) * ARTICLES_PER_PAGE)
+    .limit(ARTICLES_PER_PAGE)
     .lean();
 
   // Fetch featured roadmaps
@@ -51,14 +63,7 @@ export default async function Home() {
                 <Rocket className="h-5 w-5" />
                 Explore Roadmaps
              </Link>
-             <div className="relative w-full max-w-xs group">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-blue-500 transition-colors" />
-                <input
-                  type="text"
-                  placeholder="Quick search..."
-                  className="w-full rounded-2xl border border-border bg-card py-4 pl-12 pr-4 text-sm text-foreground outline-none ring-blue-500/30 focus:ring-4 transition-all"
-                />
-             </div>
+             <SearchBar />
           </div>
         </div>
 
@@ -120,6 +125,9 @@ export default async function Home() {
              </div>
           )}
         </div>
+
+        {/* Pagination */}
+        <Pagination currentPage={currentPage} totalPages={totalPages} basePath="/" />
       </div>
     </div>
   );

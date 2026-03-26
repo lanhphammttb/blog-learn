@@ -9,6 +9,7 @@ import ProgressButton from '@/components/roadmap/ProgressButton';
 import { auth } from '@/auth';
 import UserProgress from '@/models/UserProgress';
 import mongoose from 'mongoose';
+import type { Metadata } from 'next';
 
 import Roadmap from '@/models/Roadmap';
 import LessonNavigation from '@/components/roadmap/LessonNavigation';
@@ -16,6 +17,27 @@ import FocusToggle from '@/components/FocusToggle';
 import ArticleContentWrapper from '@/components/ArticleContentWrapper';
 import InteractiveMarkdown from '@/components/InteractiveMarkdown';
 import TaskSidebar from '@/components/TaskSidebar';
+import { triggerLessonAutoComplete } from '@/components/LessonAutoComplete';
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  await dbConnect();
+  const article = await Article.findOne({ slug }).select('title excerpt category').lean();
+  
+  if (!article) {
+    return { title: 'Article Not Found' };
+  }
+
+  return {
+    title: `${article.title} | EnglishHub`,
+    description: article.excerpt || `Learn English: ${article.title}`,
+    openGraph: {
+      title: article.title,
+      description: article.excerpt || `Learn English: ${article.title}`,
+      type: 'article',
+    },
+  };
+}
 
 export default async function ArticleDetail({ 
   params,
@@ -78,7 +100,7 @@ export default async function ArticleDetail({
         { userId: { $in: [userId, providerId].filter(Boolean) } },
         { email: email }
       ],
-      roadmapId: roadmapId ? new mongoose.Types.ObjectId(roadmapId) : { $in: [null, new mongoose.Types.ObjectId("000000000000000000000000")] }
+      roadmapId: roadmapId ? new mongoose.Types.ObjectId(roadmapId) : new mongoose.Types.ObjectId("000000000000000000000000")
     }).lean();
 
     if (progress) {
@@ -188,6 +210,7 @@ export default async function ArticleDetail({
                   articleId={article._id.toString()}
                   roadmapId={roadmapId}
                   initialCompletedTasks={initialCompletedTasks}
+                  onAllTasksComplete={triggerLessonAutoComplete}
                 />
               </div>
 
@@ -205,6 +228,7 @@ export default async function ArticleDetail({
                  <p className="text-muted-foreground mb-8 max-w-md">Mark this lesson as completed to track your learning progress on the roadmap.</p>
                  <ProgressButton 
                     articleId={article._id.toString()} 
+                    roadmapId={roadmapId}
                     initialCompleted={isCompleted} 
                  />
               </div>

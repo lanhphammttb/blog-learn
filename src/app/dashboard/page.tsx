@@ -5,10 +5,50 @@ import Article from '@/models/Article';
 import Roadmap from '@/models/Roadmap';
 import { 
   Trophy, BookOpen, Layers, Flame, TrendingUp, 
-  ChevronRight, Play, Star, Sparkles, Clock, Target
+  ChevronRight, Play, Star, Sparkles, Clock, Target, CheckCircle2
 } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+
+function getSkillLevel(total: number) {
+  if (total >= 20) return 'Advanced';
+  if (total >= 10) return 'Intermediate';
+  if (total >= 3) return 'Elementary';
+  return 'Beginner';
+}
+
+function calculateStreak(progressRecords: any[]): number {
+  // Collect all lastActive/lastUpdated dates
+  const dates = progressRecords
+    .map(p => p.lastUpdated || p.lastActive)
+    .filter(Boolean)
+    .map(d => {
+      const dt = new Date(d);
+      dt.setHours(0, 0, 0, 0);
+      return dt.getTime();
+    });
+
+  if (dates.length === 0) return 0;
+
+  const uniqueDays = [...new Set(dates)].sort((a, b) => b - a);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
+  const oneDay = 86400000;
+
+  // Check if last activity was today or yesterday
+  if (uniqueDays[0] < todayMs - oneDay) return 0;
+
+  let streak = 1;
+  for (let i = 1; i < uniqueDays.length; i++) {
+    if (uniqueDays[i - 1] - uniqueDays[i] === oneDay) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
 
 export default async function LearnerDashboard() {
   const session = await auth();
@@ -28,15 +68,33 @@ export default async function LearnerDashboard() {
   // Active Roadmaps (started but not finished)
   const activePaths = allProgress.filter(p => p.roadmapId && p.completedArticles.length > 0);
   
-  // Recent completions
-  const completionDetail = await UserProgress.find({ userId })
-    .sort({ lastUpdated: -1 })
-    .limit(5)
-    .populate({
-       path: 'completedArticles',
-       options: { limit: 1, sort: { _id: -1 } }
-    })
-    .lean();
+  // Calculate real streak
+  const streak = calculateStreak(allProgress);
+
+  // Calculate skill level based on real data
+  const skillLevel = getSkillLevel(totalCompleted);
+
+  // Recent completed articles (real data)
+  const recentArticleIds = allProgress
+    .flatMap(p => p.completedArticles.map(a => ({ id: a, date: p.lastUpdated || p.lastActive })))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5)
+    .map(a => a.id);
+
+  const recentArticles = recentArticleIds.length > 0
+    ? await Article.find({ _id: { $in: recentArticleIds } }).select('title slug').lean()
+    : [];
+
+  const recentActivity = recentArticleIds.map((id, i) => {
+    const article = recentArticles.find((a: any) => a._id.toString() === id.toString());
+    const progress = allProgress.find(p => p.completedArticles.some(a => a.toString() === id.toString()));
+    const date = progress?.lastUpdated || progress?.lastActive;
+    return {
+      title: article?.title || 'Unknown Lesson',
+      slug: article?.slug,
+      date: date ? new Date(date) : new Date(),
+    };
+  });
 
   const getBadges = (total: number) => {
     const badges = [];
@@ -47,6 +105,15 @@ export default async function LearnerDashboard() {
   };
 
   const userBadges = getBadges(totalCompleted);
+
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return '1 day ago';
+    return `${diffDays} days ago`;
+  };
 
   return (
     <div className="min-h-screen bg-background pt-24 pb-12 px-6 lg:px-8">
@@ -80,7 +147,7 @@ export default async function LearnerDashboard() {
                </div>
                <span className="text-xs font-bold text-muted-foreground uppercase">Current Streak</span>
              </div>
-             <p className="text-4xl font-black text-foreground">3 Days</p>
+             <p className="text-4xl font-black text-foreground">{streak} {streak === 1 ? 'Day' : 'Days'}</p>
           </div>
           <div className="rounded-3xl border border-border bg-card p-8 shadow-xl">
              <div className="flex items-center gap-4 mb-4">
@@ -98,7 +165,7 @@ export default async function LearnerDashboard() {
                </div>
                <span className="text-xs font-bold text-blue-100 uppercase">Skill Level</span>
              </div>
-             <p className="text-2xl font-black text-white uppercase italic">Intermediate</p>
+             <p className="text-2xl font-black text-white uppercase italic">{skillLevel}</p>
           </div>
         </div>
 
@@ -159,22 +226,29 @@ export default async function LearnerDashboard() {
                  </div>
                  
                  <div className="rounded-3xl border border-border bg-card p-2">
-                    {/* Activity List Mock */}
                     <div className="space-y-1">
-                       {[1,2,3].map((i) => (
-                          <div key={i} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/30 transition-colors">
-                             <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center">
-                                <Clock className="h-5 w-5 text-muted-foreground" />
-                             </div>
-                             <div className="flex-grow">
-                                <p className="text-sm font-bold text-foreground">Completed "Daily Vocabulary #4"</p>
-                                <p className="text-[10px] text-muted-foreground uppercase">{i} day ago</p>
-                             </div>
-                             <div className="h-8 w-8 rounded-full border border-green-500/20 text-green-500 flex items-center justify-center">
-                                <CheckCircle2 className="h-4 w-4" />
-                             </div>
-                          </div>
-                       ))}
+                       {recentActivity.length > 0 ? (
+                         recentActivity.map((activity, i) => (
+                           <div key={i} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-muted/30 transition-colors">
+                              <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center">
+                                 <Clock className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div className="flex-grow">
+                                 <p className="text-sm font-bold text-foreground">
+                                   Completed &quot;{activity.title}&quot;
+                                 </p>
+                                 <p className="text-[10px] text-muted-foreground uppercase">{formatTimeAgo(activity.date)}</p>
+                              </div>
+                              <div className="h-8 w-8 rounded-full border border-green-500/20 text-green-500 flex items-center justify-center">
+                                 <CheckCircle2 className="h-4 w-4" />
+                              </div>
+                           </div>
+                         ))
+                       ) : (
+                         <div className="py-8 text-center text-sm text-muted-foreground">
+                           No activity yet. Start learning to see your progress here!
+                         </div>
+                       )}
                     </div>
                  </div>
               </section>
@@ -216,25 +290,5 @@ export default async function LearnerDashboard() {
         </div>
       </div>
     </div>
-  );
-}
-
-function CheckCircle2(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <path d="m9 11 3 3L22 4" />
-    </svg>
   );
 }

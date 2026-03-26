@@ -3,11 +3,32 @@ export const dynamic = 'force-dynamic';
 import Roadmap from '@/models/Roadmap';
 import Article from '@/models/Article';
 import { notFound } from 'next/navigation';
-import { Target, ChevronLeft, Rocket, Flag, Layout, ArrowRight } from 'lucide-react';
+import { Target, ChevronLeft, Rocket, Flag, Layout, ArrowRight, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import RoadmapCanvas from '@/components/roadmap/RoadmapCanvas';
+import ProgressCircle from '@/components/roadmap/ProgressCircle';
 import { auth } from '@/auth';
 import UserProgress from '@/models/UserProgress';
+import type { Metadata } from 'next';
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  await dbConnect();
+  const roadmap = await Roadmap.findOne({ slug, isPublished: true }).select('title description').lean();
+  
+  if (!roadmap) {
+    return { title: 'Roadmap Not Found' };
+  }
+
+  return {
+    title: `${roadmap.title} | EnglishHub Roadmap`,
+    description: roadmap.description || `Learn English with the ${roadmap.title} roadmap`,
+    openGraph: {
+      title: roadmap.title,
+      description: roadmap.description || `Learn English with the ${roadmap.title} roadmap`,
+    },
+  };
+}
 
 export default async function RoadmapDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -39,32 +60,27 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
     }))
   };
 
-  // Fetch all progress for the user to count any completed articles globally
+  // Fetch progress ONLY for this specific roadmap
   let completedArticleIds: string[] = [];
   if (session?.user) {
     const userId = (session.user as any).id;
     const providerId = (session.user as any).providerId;
     const email = session.user.email;
-    console.log(`[DEBUG] RoadmapDetailPage: Fetching progress for user: ${userId}, email: ${email}`);
     
-    const allProgress = await UserProgress.find({
+    // Query ONLY the progress record for THIS specific roadmap
+    const progress = await UserProgress.findOne({
       $or: [
         { userId: { $in: [userId, providerId].filter(Boolean) } },
-        { email: email }
-      ]
+        ...(email ? [{ email }] : [])
+      ],
+      roadmapId: roadmapData._id
     }).lean();
     
-    console.log(`[DEBUG] RoadmapDetailPage: Found ${allProgress.length} progress records for user ${userId}`);
-    
-    // Flatten all completedArticles from all roadmap progress records
-    const allCompletedSets = allProgress.map(p => p.completedArticles.map(id => id.toString()));
-    completedArticleIds = Array.from(new Set(allCompletedSets.flat()));
-    console.log(`[DEBUG] RoadmapDetailPage: Total unique completed articles: ${completedArticleIds.length}`);
-  } else {
-    console.log(`[DEBUG] RoadmapDetailPage: No session found, using empty progress.`);
+    if (progress) {
+      completedArticleIds = (progress.completedArticles || []).map((id: any) => id.toString());
+    }
   }
 
-    // Filter global completed articles to only those that exist in this specific roadmap
     const roadmapArticleIds = new Set(roadmap.items.map(item => item.articleId));
     const completedInThisRoadmap = completedArticleIds.filter(id => roadmapArticleIds.has(id));
     
@@ -103,19 +119,11 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
               </p>
             </div>
             
-            <div className="flex flex-col items-center md:items-end">
-               <div className="relative h-24 w-24">
-                  <svg className="h-full w-full" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="16" fill="none" className="stroke-muted/20" strokeWidth="3" />
-                    <circle cx="18" cy="18" r="16" fill="none" className="stroke-blue-600 transition-all duration-1000" strokeWidth="3" 
-                            strokeDasharray={`${progressPercent}, 100`} strokeLinecap="round" transform="rotate(-90 18 18)" />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xl font-black text-foreground">{progressPercent}%</span>
-                  </div>
-               </div>
-               <p className="mt-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Progress</p>
-            </div>
+            <ProgressCircle 
+              serverPercent={progressPercent}
+              roadmapArticleIds={roadmap.items.map(item => item.articleId)}
+              isLoggedIn={!!session?.user}
+            />
           </div>
         </div>
         
@@ -160,26 +168,3 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
   );
 }
 
-function Trophy(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-      <path d="M4 22h16" />
-      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-    </svg>
-  );
-}

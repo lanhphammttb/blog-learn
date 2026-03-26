@@ -27,20 +27,26 @@ interface RoadmapCanvasProps {
 export default function RoadmapCanvas({ roadmap, completedArticleIds: initialCompletedIds, isLoggedIn }: RoadmapCanvasProps) {
   const [completedArticleIds, setCompletedArticleIds] = useState<string[]>(initialCompletedIds);
   
+  // Build a set of article IDs that belong to this roadmap
+  const roadmapArticleIdSet = new Set(roadmap.items.map(item => item.articleId));
+
   useEffect(() => {
     // ONLY use guest progress if NOT logged in
     if (!isLoggedIn) {
-      const guestProgress = JSON.parse(localStorage.getItem('guest_progress') || '[]');
-      if (guestProgress.length > 0) {
-        setCompletedArticleIds(guestProgress);
+      const guestProgress: string[] = [...new Set(JSON.parse(localStorage.getItem('guest_progress') || '[]'))];
+      // Filter guest progress to only articles in this roadmap
+      const filteredProgress = guestProgress.filter(id => roadmapArticleIdSet.has(id));
+      if (filteredProgress.length > 0) {
+        setCompletedArticleIds(filteredProgress);
       }
     }
 
     // Listen for progress updates from buttons
     const handleUpdate = () => {
       if (!isLoggedIn) {
-        const updatedGuestProgress = JSON.parse(localStorage.getItem('guest_progress') || '[]');
-        setCompletedArticleIds(updatedGuestProgress);
+        const updatedGuestProgress: string[] = [...new Set(JSON.parse(localStorage.getItem('guest_progress') || '[]'))];
+        const filtered = updatedGuestProgress.filter(id => roadmapArticleIdSet.has(id));
+        setCompletedArticleIds(filtered);
       }
     };
 
@@ -49,7 +55,8 @@ export default function RoadmapCanvas({ roadmap, completedArticleIds: initialCom
   }, []);
 
   const totalItems = roadmap.items.length;
-  const completedCount = completedArticleIds.length;
+  // Only count completed articles that are actually in this roadmap
+  const completedCount = completedArticleIds.filter(id => roadmapArticleIdSet.has(id)).length;
   const progressPercent = Math.round((completedCount / totalItems) * 100) || 0;
 
   return (

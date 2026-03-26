@@ -43,7 +43,7 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
 
     let previousIndices = [...completedIndices];
     const isDone = completedIndices.includes(index);
-    const newIndices = isDone ? completedIndices.filter(i => i !== index) : [...completedIndices, index];
+    const newIndices = isDone ? completedIndices.filter((i: number) => i !== index) : [...completedIndices, index];
     
     setCompletedIndices(newIndices);
 
@@ -78,7 +78,6 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
     } catch (err) {
       setCompletedIndices(previousIndices);
     } finally {
-      setIsSyncing(true); // Wait a bit
       setTimeout(() => setIsSyncing(false), 300);
     }
   };

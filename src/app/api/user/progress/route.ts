@@ -3,8 +3,13 @@ import { auth } from '@/auth';
 import dbConnect from '@/lib/db';
 import UserProgress from '@/models/UserProgress';
 import mongoose from 'mongoose';
+import { rateLimit, getClientId, rateLimitResponse } from '@/lib/rateLimit';
 
 export async function GET(request: Request) {
+  const clientId = getClientId(request);
+  const { success, resetTime } = rateLimit(`progress-get:${clientId}`, { limit: 30, windowSeconds: 60 });
+  if (!success) return rateLimitResponse(resetTime);
+
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -32,6 +37,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const clientId = getClientId(request);
+  const { success, resetTime } = rateLimit(`progress-post:${clientId}`, { limit: 30, windowSeconds: 60 });
+  if (!success) return rateLimitResponse(resetTime);
+
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -60,7 +69,7 @@ export async function POST(request: Request) {
 
     const updateData = {
       userId,
-      email,
+      email: email || undefined,
       lastUpdated: Date.now()
     };
 

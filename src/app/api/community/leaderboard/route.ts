@@ -2,8 +2,13 @@ import { auth } from "@/auth";
 import dbConnect from "@/lib/db";
 import UserProgress from "@/models/UserProgress";
 import mongoose from "mongoose";
+import { rateLimit, getClientId, rateLimitResponse } from '@/lib/rateLimit';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const clientId = getClientId(request);
+  const { success, resetTime } = rateLimit(`leaderboard:${clientId}`, { limit: 20, windowSeconds: 60 });
+  if (!success) return rateLimitResponse(resetTime);
+
   try {
     await dbConnect();
 
