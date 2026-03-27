@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     if (!doc) {
       doc = await UserProgress.create({
         userId: userId || providerId || email,
-        email: email,
+        email: email || undefined,
         roadmapId: roadmapIdObj,
         articleTasks: [],
         xp: 0,
@@ -60,16 +60,16 @@ export async function POST(request: Request) {
       entry = newEntry as any;
     }
 
-    const indexInArray = entry.taskIndices.indexOf(taskIndex);
+    const indexInArray = entry!.taskIndices.indexOf(taskIndex);
 
     if (completed) {
       if (indexInArray === -1) {
-        entry.taskIndices.push(taskIndex);
+        entry!.taskIndices.push(taskIndex);
         doc.xp = (doc.xp || 0) + 10;
       }
     } else {
       if (indexInArray !== -1) {
-        entry.taskIndices.splice(indexInArray, 1);
+        entry!.taskIndices.splice(indexInArray, 1);
       }
     }
 
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     // 5. Return Absolute Truth from the saved document
     return NextResponse.json({ 
       success: true, 
-      completedTasks: entry.taskIndices,
+      completedTasks: entry!.taskIndices,
       xp: doc.xp || 0,
       streak: doc.streak || 0
     });
