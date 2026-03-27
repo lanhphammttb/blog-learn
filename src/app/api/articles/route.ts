@@ -19,9 +19,11 @@ export async function GET(request: Request) {
       query.isPublished = true;
     }
 
-    const articles = await Article.find(query)
-      .sort({ createdAt: -1 })
-      .select(search ? 'title slug category difficulty' : undefined);
+    let queryBuilder = Article.find(query).sort({ createdAt: -1 });
+    if (search) {
+      queryBuilder = queryBuilder.select('title slug category difficulty');
+    }
+    const articles = await queryBuilder;
     return NextResponse.json(articles);
   } catch (error: any) {
     console.error('API GET Error:', error);
