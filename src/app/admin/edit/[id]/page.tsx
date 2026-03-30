@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { 
-  Save, X, Sparkles, ChevronLeft, Loader2, Eye, Edit3,
-  Bold, Italic, Link as LinkIcon, List, Type, 
-  BookOpen, Hash, Layers, Table, CheckSquare
+  Save, X, Sparkles, ChevronLeft, Eye, Edit3,
+  Link as LinkIcon, List, Type, 
+  BookOpen, Hash, Layers, Link2, Table, CheckSquare, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import SplitMarkdownEditor from '@/components/SplitMarkdownEditor';
 
 export default function EditArticle() {
   const router = useRouter();
@@ -17,7 +18,8 @@ export default function EditArticle() {
   
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+  const [viewMode, setViewMode] = useState<'split' | 'full-preview'>('split');
+  const [allArticles, setAllArticles] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -26,141 +28,85 @@ export default function EditArticle() {
     category: 'Grammar',
     difficulty: 'Intermediate',
     series: '',
-    tags: '',
+    tags: [] as string[],
     isPublished: true,
+    thumbnailUrl: '',
+    relatedArticles: [] as string[],
   });
 
+  const [tagInput, setTagInput] = useState('');
+
   useEffect(() => {
-    const fetchArticle = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`/api/articles/${id}`);
-        if (res.ok) {
-          const data = await res.json();
+        const [articleRes, allRes] = await Promise.all([
+          fetch(`/api/articles/${id}`),
+          fetch('/api/articles')
+        ]);
+
+        if (allRes.ok) {
+          const allData = await allRes.json();
+          setAllArticles(allData);
+        }
+
+        if (articleRes.ok) {
+          const data = await articleRes.json();
           setFormData({
             ...data,
-            tags: data.tags.join(', '),
+            tags: data.tags || [],
             difficulty: data.difficulty || 'Intermediate',
             series: data.series || '',
+            thumbnailUrl: data.thumbnailUrl || '',
+            relatedArticles: data.relatedArticles || [],
           });
         }
       } catch (error) {
-        console.error(error);
+        console.error('Fetch error:', error);
       } finally {
         setFetching(false);
       }
     };
-    if (id) fetchArticle();
+    if (id) fetchData();
   }, [id]);
 
-  const insertText = (before: string, after: string = '') => {
-    const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    
-    setFormData(prev => {
-      const text = prev.content;
-      const beforeText = text.substring(0, start);
-      const selectedText = text.substring(start, end);
-      const afterText = text.substring(end);
-      return { ...prev, content: beforeText + before + selectedText + after + afterText };
-    });
-    
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, end + before.length);
-    }, 0);
+  const handleAddTag = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      if (!formData.tags.includes(tagInput.trim())) {
+        setFormData(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
+      }
+      setTagInput('');
+    }
   };
 
-  const insertTable = () => {
-    const tableTemplate = `
-| Header 1 | Header 2 |
-| :--- | :--- |
-| Row 1 Col 1 | Row 1 Col 2 |
-| Row 2 Col 1 | Row 2 Col 2 |
-`;
-    insertText(tableTemplate);
+  const removeTag = (tagToRemove: string) => {
+    setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tagToRemove) }));
   };
 
-  const insertTaskList = () => {
-    const taskTemplate = `
-- [ ] Task 1
-- [ ] Task 2
-- [ ] Task 3
-`;
-    insertText(taskTemplate);
+  const toggleRelated = (articleId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      relatedArticles: prev.relatedArticles.includes(articleId)
+        ? prev.relatedArticles.filter(aid => aid !== articleId)
+        : [...prev.relatedArticles, articleId]
+    }));
   };
 
-  const insertFromExcel = () => {
-    const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
-    const start = textarea?.selectionStart || 0;
-    const end = textarea?.selectionEnd || 0;
-
-    const data = prompt('Paste your Excel/Sheets data here:');
-    if (!data) return;
-
-    const rows = data.trim().split('\n');
-    if (rows.length === 0) return;
-
-    const markdownRows = rows.map(row => {
-      const cells = row.split(/\t| {2,}/).map(c => c.trim()).filter(c => c !== '');
-      return `| ${cells.join(' | ')} |`;
-    });
-
-    const colCounts = rows.map(row => row.split(/\t| {2,}/).filter(c => c.trim() !== '').length);
-    const columnCount = Math.max(...colCounts);
-    const separator = `| ${Array(columnCount).fill(':---').join(' | ')} |`;
-    
-    const tableResult = `\n${markdownRows[0]}\n${separator}\n${markdownRows.slice(1).join('\n')}\n`;
-    
-    setFormData(prev => {
-      const text = prev.content;
-      const beforeText = text.substring(0, start);
-      const afterText = text.substring(end);
-      return { ...prev, content: beforeText + tableResult + afterText };
-    });
-    
-    setTimeout(() => {
-      textarea?.focus();
-      textarea?.setSelectionRange(start + tableResult.length, start + tableResult.length);
-    }, 0);
-  };
-
-  const addVocabularyTemplate = () => {
-    const template = `
-### 📚 Vocabulary
-- **Word**: [Definition]
-  *Example: [Sentence]*
-`;
-    setFormData({ ...formData, content: formData.content + template });
-  };
-
-  const addGrammarTemplate = () => {
-    const template = `
-### ✍️ Grammar Point: [Topic]
-**Rule**: [Explanation]
-**Examples**:
-1. [Example 1]
-2. [Example 2]
-`;
-    setFormData({ ...formData, content: formData.content + template });
+  const generateAIExcerpt = () => {
+    if (!formData.content) return;
+    const plainText = formData.content.replace(/[#*`]/g, '').slice(0, 160) + '...';
+    setFormData(prev => ({ ...prev, excerpt: plainText }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const tagsArray = formData.tags.split(',').map((tag) => tag.trim()).filter((tag) => tag !== '');
-
     try {
       const res = await fetch(`/api/articles/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          tags: tagsArray,
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (res.ok) {
@@ -196,186 +142,251 @@ export default function EditArticle() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 bg-background">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 bg-background min-h-screen">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <Link
             href="/admin"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
           >
             <ChevronLeft className="h-4 w-4" />
             Back to Dashboard
           </Link>
-          <h1 className="mt-4 text-3xl font-bold text-foreground flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <BookOpen className="h-8 w-8 text-blue-500" />
             Edit English Lesson
           </h1>
         </div>
 
-        <div className="flex rounded-2xl bg-card p-1 border border-border shadow-sm">
+        <div className="flex items-center gap-2 rounded-2xl bg-card p-1 border border-border shadow-sm w-fit">
           <button
-            onClick={() => setViewMode('edit')}
-            className={`flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-xl transition-all ${viewMode === 'edit' ? 'bg-blue-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setViewMode('split')}
+            className={`flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-xl transition-all ${viewMode === 'split' ? 'bg-blue-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <Edit3 className="h-4 w-4" />
-            Write
+            Editor
           </button>
           <button
-            onClick={() => setViewMode('preview')}
-            className={`flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-xl transition-all ${viewMode === 'preview' ? 'bg-blue-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setViewMode('full-preview')}
+            className={`flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-xl transition-all ${viewMode === 'full-preview' ? 'bg-blue-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <Eye className="h-4 w-4" />
-            Preview
+            Full Preview
           </button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-xl">
-            {viewMode === 'edit' ? (
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-2 pb-4 border-b border-border">
-                  <button type="button" onClick={() => insertText('**', '**')} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="Bold"><Bold className="h-4 w-4" /></button>
-                  <button type="button" onClick={() => insertText('_', '_')} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="Italic"><Italic className="h-4 w-4" /></button>
-                  <button type="button" onClick={() => insertText('# ')} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="Heading"><Type className="h-4 w-4" /></button>
-                  <button type="button" onClick={() => insertText('- ')} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="List"><List className="h-4 w-4" /></button>
-                  <button type="button" onClick={() => insertText('[', '](url)')} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="Link"><LinkIcon className="h-4 w-4" /></button>
-                  <button type="button" onClick={insertTable} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="Table"><Table className="h-4 w-4" /></button>
-                  <button type="button" onClick={insertTaskList} className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground" title="Task List"><CheckSquare className="h-4 w-4" /></button>
-                  <button type="button" onClick={insertFromExcel} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold hover:bg-green-500/20 transition-all">
-                     Paster from Excel
-                  </button>
-                  <div className="mx-2 h-4 w-px bg-border" />
-                  <button type="button" onClick={addVocabularyTemplate} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-500/20 transition-all">
-                    + Vocabulary
-                  </button>
-                  <button type="button" onClick={addGrammarTemplate} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:bg-indigo-500/20 transition-all">
-                    + Grammar Point
-                  </button>
-                </div>
-
-                <textarea
-                  id="content-editor"
-                  required
-                  name="content"
-                  value={formData.content}
-                  onChange={handleChange}
-                  rows={20}
-                  className="w-full bg-transparent p-2 font-mono text-sm leading-relaxed text-foreground outline-none resize-none placeholder-muted-foreground/50"
-                />
-              </div>
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Main Editor Area */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {viewMode === 'split' ? (
+              <SplitMarkdownEditor
+                value={formData.content}
+                onChange={(val) => setFormData({ ...formData, content: val })}
+                onGenerateAI={generateAIExcerpt}
+              />
             ) : (
-              <div className="min-h-[500px] overflow-y-auto">
-                {formData.title && <h1 className="text-4xl font-extrabold text-foreground mb-8">{formData.title}</h1>}
-                <MarkdownRenderer content={formData.content} />
+              <div className="rounded-2xl border border-border bg-card p-8 lg:p-12 shadow-sm min-h-[700px]">
+                <h1 className="text-4xl font-bold text-foreground mb-8 tracking-tight">{formData.title || 'Untitled Lesson'}</h1>
+                <div className="prose prose-slate dark:prose-invert max-w-none">
+                  <MarkdownRenderer content={formData.content} />
+                </div>
               </div>
             )}
           </div>
+
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-blue-500" />
+                Related Lessons
+              </h3>
+              <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-md">
+                {formData.relatedArticles.length} selected
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {allArticles.filter(a => a._id !== id).map(articleItem => (
+                <button
+                  key={articleItem._id}
+                  type="button"
+                  onClick={() => toggleRelated(articleItem._id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                    formData.relatedArticles.includes(articleItem._id)
+                      ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-400'
+                      : 'bg-background border-border text-muted-foreground hover:border-blue-300'
+                  }`}
+                >
+                  {articleItem.title}
+                </button>
+              ))}
+              {allArticles.length <= 1 && (
+                <div className="w-full py-6 text-center border-2 border-dashed border-border rounded-xl">
+                  <p className="text-sm text-muted-foreground">No other lessons found yet</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-xl space-y-6">
+        {/* Sidebar Settings */}
+        <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-6 self-start animate-in fade-in slide-in-from-right-4 duration-500">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-6">
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-               <Sparkles className="h-5 w-5 text-blue-500" />
-               Lesson Settings
+               <Hash className="h-5 w-5 text-blue-500" />
+               Properties
             </h2>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Title</label>
+
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex justify-between">
+                  Title
+                  <span className={formData.title.length > 50 ? "text-amber-500" : ""}>{formData.title.length}/60</span>
+                </label>
                 <input
                   required
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  className="w-full rounded-xl border border-border bg-muted/30 p-3 text-sm text-foreground outline-none focus:border-blue-500/50"
+                  placeholder="Mastering Phrasal Verbs"
+                  className="w-full rounded-xl border border-border bg-background p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-muted-foreground/50"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Difficulty</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['Beginner', 'Intermediate', 'Advanced'].map((level) => (
-                    <button
-                      key={level}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, difficulty: level as any })}
-                      className={`px-2 py-2 text-[10px] font-bold rounded-lg border transition-all ${formData.difficulty === level ? 'bg-blue-600 border-blue-600 text-white' : 'border-border bg-muted/30 text-muted-foreground'}`}
-                    >
-                      {level}
-                    </button>
-                  ))}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Category</label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-border bg-background p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  >
+                    {['Daily Lesson', 'Grammar', 'Vocabulary', 'Idioms', 'Tips'].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Difficulty</label>
+                  <select
+                    name="difficulty"
+                    value={formData.difficulty}
+                    onChange={(e) => setFormData({...formData, difficulty: e.target.value as any})}
+                    className="w-full rounded-xl border border-border bg-background p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  >
+                    {['Beginner', 'Intermediate', 'Advanced'].map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Learning Path / Series</label>
-                <div className="relative">
-                  <Layers className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Learning Series</label>
+                <div className="relative group">
+                  <Layers className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
                     name="series"
                     value={formData.series}
                     onChange={handleChange}
-                    placeholder="e.g. Grammar Masterclass"
-                    className="w-full rounded-xl border border-border bg-muted/30 p-3 pl-10 text-sm text-foreground outline-none focus:border-blue-500/50"
+                    placeholder="e.g. Grammar Masters"
+                    className="w-full rounded-xl border border-border bg-background p-3 pl-10 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Category</label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-border bg-muted/30 p-3 text-sm text-foreground outline-none appearance-none"
-                >
-                  <option value="Daily Lesson">Daily Lesson</option>
-                  <option value="Grammar">Grammar</option>
-                  <option value="Vocabulary">Vocabulary</option>
-                  <option value="Idioms">Idioms</option>
-                  <option value="Tips">Tips</option>
-                </select>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Thumbnail URL</label>
+                <div className="space-y-3">
+                  <input
+                    name="thumbnailUrl"
+                    value={formData.thumbnailUrl}
+                    onChange={handleChange}
+                    placeholder="https://..."
+                    className="w-full rounded-xl border border-border bg-background p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  />
+                  {formData.thumbnailUrl && (
+                    <div className="relative aspect-[16/10] rounded-xl overflow-hidden border border-border bg-muted">
+                      <img src={formData.thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Excerpt</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground flex justify-between">
+                  Excerpt
+                  <span className={formData.excerpt.length > 150 ? "text-amber-500" : ""}>{formData.excerpt.length}/160</span>
+                </label>
                 <textarea
                   required
                   name="excerpt"
                   value={formData.excerpt}
                   onChange={handleChange}
-                  rows={2}
-                  className="w-full rounded-xl border border-border bg-muted/30 p-3 text-sm text-foreground outline-none resize-none"
+                  rows={4}
+                  placeholder="Update your article hook..."
+                  className="w-full rounded-xl border border-border bg-background p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
                 />
               </div>
-              
-              <div className="flex items-center gap-3 pt-4">
-                <input
-                  type="checkbox"
-                  name="isPublished"
-                  id="isPublished"
-                  checked={formData.isPublished}
-                  onChange={handleChange}
-                  className="h-5 w-5 rounded-lg border-border bg-muted text-blue-600 focus:ring-blue-500/20"
-                />
-                <label htmlFor="isPublished" className="text-sm font-medium text-foreground">
-                  Published
-                </label>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Tags</label>
+                <div className="w-full rounded-xl border border-border bg-background p-2 min-h-[44px]">
+                  <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    {formData.tags.map(tag => (
+                      <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-muted text-foreground text-xs font-medium">
+                        {tag}
+                        <button type="button" onClick={() => removeTag(tag)} className="text-muted-foreground hover:text-red-500">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleAddTag}
+                    placeholder={formData.tags.length === 0 ? "Add tags & press enter..." : ""}
+                    className="bg-transparent w-full p-2 text-sm font-medium outline-none placeholder:text-muted-foreground/50"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50 border border-border">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-foreground relative z-10 w-fit">Visibility</p>
+                  <p className="text-xs text-muted-foreground">Publish to users immediately</p>
+                </div>
+                <div
+                  onClick={() => setFormData(prev => ({ ...prev, isPublished: !prev.isPublished }))}
+                  className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors duration-200 ${formData.isPublished ? 'bg-blue-600' : 'bg-muted-foreground/30'}`}
+                >
+                  <div className={`bg-white w-4 h-4 rounded-full transition-transform duration-200 shadow-sm ${formData.isPublished ? 'translate-x-6' : 'translate-x-0'}`} />
+                </div>
               </div>
             </div>
 
-            <div className="pt-6">
+            <div className="pt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => router.push('/admin')}
+                className="px-4 py-3 rounded-xl border border-border text-foreground hover:bg-muted transition-colors font-medium text-sm"
+              >
+                Cancel
+              </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-blue-600 py-4 text-sm font-bold text-white transition-all hover:bg-blue-500 hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] disabled:opacity-50"
+                className="flex-grow flex items-center justify-center gap-2 rounded-xl bg-blue-600 text-white p-3 text-sm font-semibold transition-colors hover:bg-blue-700 disabled:opacity-50"
               >
-                {loading ? 'Saving...' : (
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
                   <>
-                    <Save className="h-5 w-5" />
-                    Update Lesson
+                    <Save className="h-4 w-4" />
+                    <span>Save Changes</span>
                   </>
                 )}
               </button>
@@ -383,6 +394,8 @@ export default function EditArticle() {
           </div>
         </div>
       </form>
+
+
     </div>
   );
 }

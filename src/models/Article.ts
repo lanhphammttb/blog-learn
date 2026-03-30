@@ -9,6 +9,7 @@ export interface IArticle extends Document {
   tags: string[];
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   series: string; // Internal grouping name
+  thumbnailUrl?: string;
   relatedArticles: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
@@ -20,6 +21,7 @@ const ArticleSchema: Schema = new Schema(
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     content: { type: String, required: true },
+    thumbnailUrl: { type: String },
     excerpt: { type: String },
     category: { type: String, default: 'General' },
     tags: [{ type: String }],
