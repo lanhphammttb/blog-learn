@@ -18,6 +18,8 @@ import ArticleContentWrapper from '@/components/ArticleContentWrapper';
 import InteractiveMarkdown from '@/components/InteractiveMarkdown';
 import TaskSidebar from '@/components/TaskSidebar';
 import { triggerLessonAutoComplete } from '@/components/LessonAutoComplete';
+import ArticleAudioPlayer from '@/components/ArticleAudioPlayer';
+import ReadingProgress from '@/components/ReadingProgress';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -156,6 +158,7 @@ export default async function ArticleDetail({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <ReadingProgress articleSlug={article.slug} />
       <div className="mx-auto max-w-6xl px-6 py-12 lg:px-8">
         <Link
           href={roadmapSlug ? `/roadmaps/${roadmapSlug}` : "/"}
@@ -169,7 +172,7 @@ export default async function ArticleDetail({
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
           <div className="lg:col-span-3">
-            <ArticleContentWrapper>
+            <ArticleContentWrapper articleId={article._id.toString()}>
               <article>
               <header className="mb-12">
                 <div className="mb-6 flex flex-wrap items-center gap-4">
@@ -199,9 +202,11 @@ export default async function ArticleDetail({
                   {article.title}
                 </h1>
                 
-                <p className="text-xl leading-8 text-muted-foreground">
+                <p className="text-xl leading-8 text-muted-foreground mb-8">
                   {article.excerpt}
                 </p>
+
+                <ArticleAudioPlayer content={article.content} title={article.title} />
               </header>
 
               <div className="border-t border-border pt-12">

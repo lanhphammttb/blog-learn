@@ -5,49 +5,20 @@ import Article from '@/models/Article';
 import Roadmap from '@/models/Roadmap';
 import { 
   Trophy, BookOpen, Layers, Flame, TrendingUp, 
-  ChevronRight, Play, Star, Sparkles, Clock, Target, CheckCircle2
+  ChevronRight, Play, Star, Sparkles, Clock, Target, CheckCircle2, Bookmark
 } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+
+import { calculateStreak, getUserBadges } from '@/lib/gamification';
+import Vocabulary from '@/models/Vocabulary';
+import ProgressChart from '@/components/dashboard/ProgressChart';
 
 function getSkillLevel(total: number) {
   if (total >= 20) return 'Advanced';
   if (total >= 10) return 'Intermediate';
   if (total >= 3) return 'Elementary';
   return 'Beginner';
-}
-
-function calculateStreak(progressRecords: any[]): number {
-  // Collect all lastActive/lastUpdated dates
-  const dates = progressRecords
-    .map(p => p.lastUpdated || p.lastActive)
-    .filter(Boolean)
-    .map(d => {
-      const dt = new Date(d);
-      dt.setHours(0, 0, 0, 0);
-      return dt.getTime();
-    });
-
-  if (dates.length === 0) return 0;
-
-  const uniqueDays = [...new Set(dates)].sort((a, b) => b - a);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayMs = today.getTime();
-  const oneDay = 86400000;
-
-  // Check if last activity was today or yesterday
-  if (uniqueDays[0] < todayMs - oneDay) return 0;
-
-  let streak = 1;
-  for (let i = 1; i < uniqueDays.length; i++) {
-    if (uniqueDays[i - 1] - uniqueDays[i] === oneDay) {
-      streak++;
-    } else {
-      break;
-    }
-  }
-  return streak;
 }
 
 export default async function LearnerDashboard() {
@@ -71,8 +42,20 @@ export default async function LearnerDashboard() {
   // Calculate real streak
   const streak = calculateStreak(allProgress);
 
+  // Aggregated XP History
+  const xpHistoryMap: Record<string, number> = {};
+  allProgress.forEach(p => {
+    p.xpHistory?.forEach((h: any) => {
+      xpHistoryMap[h.date] = (xpHistoryMap[h.date] || 0) + h.xp;
+    });
+  });
+  const xpHistoryLists = Object.entries(xpHistoryMap).map(([date, xp]) => ({ date, xp }));
+
   // Calculate skill level based on real data
   const skillLevel = getSkillLevel(totalCompleted);
+
+  // Fetch Vocabulary count for Badges
+  const vocabCount = await Vocabulary.countDocuments({ userId });
 
   // Recent completed articles (real data)
   const recentArticleIds = allProgress
@@ -96,15 +79,7 @@ export default async function LearnerDashboard() {
     };
   });
 
-  const getBadges = (total: number) => {
-    const badges = [];
-    if (total >= 1) badges.push({ name: 'Early Bird', icon: '🐣', color: 'bg-green-500/10 text-green-500', desc: 'Finished your first lesson' });
-    if (total >= 5) badges.push({ name: 'Fast Learner', icon: '⚡', color: 'bg-blue-500/10 text-blue-500', desc: '5 Lessons completed' });
-    if (total >= 10) badges.push({ name: 'Grammar Guru', icon: '🧠', color: 'bg-purple-500/10 text-purple-500', desc: '10 Lessons completed' });
-    return badges;
-  };
-
-  const userBadges = getBadges(totalCompleted);
+  const badges = getUserBadges(totalCompleted, streak, vocabCount);
 
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
@@ -219,6 +194,11 @@ export default async function LearnerDashboard() {
                  )}
               </section>
 
+              {/* Progress Analytics */}
+              <section className="mb-12">
+                 <ProgressChart data={xpHistoryLists} />
+              </section>
+
               <section>
                  <div className="flex items-center gap-2 mb-6">
                     <TrendingUp className="h-6 w-6 text-blue-500" />
@@ -254,13 +234,46 @@ export default async function LearnerDashboard() {
               </section>
            </div>
 
-           {/* Achievements Sidebar */}
+           {/* Sidebar: Resources & Achievements */}
            <div className="lg:col-span-1 space-y-8">
+              {/* Resources */}
+              <div className="rounded-3xl border border-border bg-card p-8 shadow-xl">
+                 <h2 className="text-xl font-black text-foreground uppercase tracking-tight mb-6">Tools</h2>
+                 <div className="flex flex-col gap-3">
+                    <Link href="/dashboard/vocabulary" className="flex items-center justify-between p-4 rounded-2xl bg-muted/50 hover:bg-muted transition-colors border border-border group">
+                       <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                             <Bookmark className="h-5 w-5" fill="currentColor" />
+                          </div>
+                          <div>
+                             <p className="font-bold text-sm">My Vocabulary</p>
+                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Flashcards Vault</p>
+                          </div>
+                       </div>
+                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+                    </Link>
+
+                    <Link href="/dashboard/notebook" className="flex items-center justify-between p-4 rounded-2xl bg-muted/50 hover:bg-muted transition-colors border border-border group">
+                       <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center">
+                             <BookOpen className="h-5 w-5" />
+                          </div>
+                          <div>
+                             <p className="font-bold text-sm">Notebook</p>
+                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Quick Notes</p>
+                          </div>
+                       </div>
+                       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+                    </Link>
+                 </div>
+              </div>
+
+              {/* Achievements */}
               <div className="rounded-3xl border border-border bg-card p-8 shadow-xl h-full">
                  <h2 className="text-2xl font-black text-foreground uppercase tracking-tight mb-8">My Badges</h2>
                  
                  <div className="grid grid-cols-1 gap-4">
-                    {userBadges.map((badge) => (
+                    {badges.unlocked.map((badge) => (
                        <div key={badge.name} className={`flex items-start gap-4 p-5 rounded-2xl ${badge.color} border border-current/10`}>
                           <span className="text-3xl">{badge.icon}</span>
                           <div>
@@ -270,20 +283,27 @@ export default async function LearnerDashboard() {
                        </div>
                     ))}
                     
-                    {userBadges.length === 0 && (
+                    {badges.unlocked.length === 0 && (
                        <p className="text-center py-8 text-sm text-muted-foreground italic">Complete lessons to earn badges!</p>
                     ) }
 
                     {/* Locked Badges */}
-                    <div className="pt-8 opacity-40">
-                       <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-muted-foreground">Locked Badges</p>
-                       <div className="flex flex-col gap-4">
-                          <div className="flex items-center gap-4 p-5 rounded-2xl bg-muted grayscale">
-                             <span className="text-3xl">🌋</span>
-                             <div className="h-2 w-16 bg-muted-foreground/20 rounded" />
+                    {badges.locked.length > 0 && (
+                       <div className="pt-8 opacity-40">
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-muted-foreground">Locked Badges</p>
+                          <div className="flex flex-col gap-4">
+                             {badges.locked.map(badge => (
+                               <div key={badge.name} className="flex items-center gap-4 p-5 rounded-2xl bg-muted grayscale">
+                                  <span className="text-3xl">{badge.icon}</span>
+                                  <div>
+                                     <h4 className="font-bold text-sm mb-1 text-foreground">{badge.name}</h4>
+                                     <p className="text-[10px] leading-tight text-muted-foreground">{badge.desc}</p>
+                                  </div>
+                               </div>
+                             ))}
                           </div>
                        </div>
-                    </div>
+                    )}
                  </div>
               </div>
            </div>

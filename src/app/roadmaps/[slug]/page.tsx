@@ -41,8 +41,11 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
+  // Extract all items from all phases
+  const allPhaseItems = roadmapData.phases?.flatMap((p: any) => p.items) || [];
+  
   // Fetch article details for the roadmap items
-  const articleIds = roadmapData.items.map(item => item.articleId);
+  const articleIds = allPhaseItems.map((item: any) => item.articleId);
   const articles = await Article.find({ _id: { $in: articleIds } }).select('slug difficulty').lean();
   
   // Create a map for quick lookup
@@ -52,16 +55,21 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
     ...roadmapData,
     _id: roadmapData._id.toString(),
     slug: roadmapData.slug,
-    items: roadmapData.items.map(item => ({
-      ...item,
-      articleId: item.articleId.toString(),
-      slug: articleMap.get(item.articleId.toString())?.slug || '',
-      difficulty: articleMap.get(item.articleId.toString())?.difficulty || 'Intermediate'
-    }))
+    phases: roadmapData.phases?.map((phase: any) => ({
+       ...phase,
+       items: phase.items.map((item: any) => ({
+         ...item,
+         articleId: item.articleId.toString(),
+         slug: articleMap.get(item.articleId.toString())?.slug || '',
+         difficulty: articleMap.get(item.articleId.toString())?.difficulty || 'Intermediate'
+       }))
+    })) || []
   };
 
   // Fetch progress ONLY for this specific roadmap
   let completedArticleIds: string[] = [];
+  let completedProjects: string[] = [];
+  let projectSubmissions: any[] = [];
   if (session?.user) {
     const userId = (session.user as any).id;
     const providerId = (session.user as any).providerId;
@@ -78,15 +86,20 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
     
     if (progress) {
       completedArticleIds = (progress.completedArticles || []).map((id: any) => id.toString());
+      completedProjects = progress.completedProjects || [];
+      projectSubmissions = (progress as any).projectSubmissions || [];
     }
   }
 
-    const roadmapArticleIds = new Set(roadmap.items.map(item => item.articleId));
+    // Flat list of items for progress calculation
+    const flatRoadmapItems = roadmap.phases.flatMap((p: any) => p.items);
+    
+    const roadmapArticleIds = new Set(flatRoadmapItems.map((item: any) => item.articleId));
     const completedInThisRoadmap = completedArticleIds.filter(id => roadmapArticleIds.has(id));
     
     const completedCount = completedInThisRoadmap.length;
-    const totalItems = roadmap.items.length;
-    const progressPercent = Math.round((completedCount / totalItems) * 100) || 0;
+    const totalItems = flatRoadmapItems.length;
+    const progressPercent = totalItems === 0 ? 0 : Math.round((completedCount / totalItems) * 100);
 
   return (
     <div className="min-h-screen bg-background">
@@ -114,14 +127,21 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
               <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-5xl mb-4">
                 {roadmap.title}
               </h1>
-              <p className="text-lg text-muted-foreground leading-relaxed">
+              <p className="text-lg text-muted-foreground leading-relaxed mb-6">
                 {roadmap.description}
               </p>
+
+              {roadmap.target_outcome && (
+                <div className="inline-flex items-center gap-2 rounded-2xl bg-yellow-500/10 px-4 py-2 text-sm font-bold text-yellow-700 dark:text-yellow-400 ring-1 ring-yellow-500/20">
+                  <Trophy className="h-4 w-4" />
+                  <span>Target: {roadmap.target_outcome}</span>
+                </div>
+              )}
             </div>
             
             <ProgressCircle 
               serverPercent={progressPercent}
-              roadmapArticleIds={roadmap.items.map(item => item.articleId)}
+              roadmapArticleIds={flatRoadmapItems.map((item: any) => item.articleId)}
               isLoggedIn={!!session?.user}
             />
           </div>
@@ -130,6 +150,17 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
         {/* Animated background Shapes */}
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl animate-pulse" />
         <div className="absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
+        
+        {roadmap.roadmap_image_url && (
+          <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+            <img 
+              src={roadmap.roadmap_image_url} 
+              alt="" 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 via-background to-background" />
+          </div>
+        )}
       </div>
 
       {/* Roadmap Visualization */}
@@ -149,6 +180,8 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
         <RoadmapCanvas 
           roadmap={JSON.parse(JSON.stringify(roadmap))} 
           completedArticleIds={completedArticleIds} 
+          completedProjects={completedProjects}
+          projectSubmissions={JSON.parse(JSON.stringify(projectSubmissions))}
           isLoggedIn={!!session}
         />
         

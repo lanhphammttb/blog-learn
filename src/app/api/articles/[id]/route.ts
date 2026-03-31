@@ -19,7 +19,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   try {
     await dbConnect();
     const body = await request.json();
-    const article = await Article.findByIdAndUpdate(id, body, { new: true });
+    const article = await Article.findByIdAndUpdate(id, body, { returnDocument: 'after' });
     if (!article) return NextResponse.json({ error: 'Article not found' }, { status: 404 });
     return NextResponse.json(article);
   } catch (error: any) {

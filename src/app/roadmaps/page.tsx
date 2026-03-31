@@ -25,7 +25,9 @@ export default async function RoadmapsPage() {
 
         {roadmaps.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {roadmaps.map((roadmap: any) => (
+            {roadmaps.map((roadmap: any) => {
+              const totalLessons = roadmap.phases?.reduce((acc: number, phase: any) => acc + (phase.items?.length || 0), 0) || 0;
+              return (
               <Link 
                 key={roadmap._id} 
                 href={`/roadmaps/${roadmap.slug}`}
@@ -38,7 +40,7 @@ export default async function RoadmapsPage() {
                     </span>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                        <Layers className="h-4 w-4" />
-                       {roadmap.items.length} lessons
+                       {totalLessons} lessons
                     </div>
                   </div>
 
@@ -52,7 +54,7 @@ export default async function RoadmapsPage() {
 
                   <div className="mt-auto flex items-center justify-between border-t border-border pt-6">
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold text-foreground">{roadmap.items.length} Lessons</span>
+                      <span className="text-xs font-bold text-foreground">{totalLessons} Lessons</span>
                       <span className="text-[10px] text-muted-foreground uppercase">Structured Path</span>
                     </div>
                     
@@ -64,7 +66,8 @@ export default async function RoadmapsPage() {
                 
                 <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-600/5 via-transparent to-indigo-600/5 opacity-0 transition-opacity group-hover:opacity-100" />
               </Link>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="py-24 text-center">

@@ -18,8 +18,9 @@ export async function GET(request: Request) {
       {
         $project: {
           userId: 1,
-          lessonCount: { $size: "$completedArticles" },
-          roadmapCount: 1, // This is always 1 per record, but we could group by userId
+          lessonCount: { $size: { $ifNull: ["$completedArticles", []] } },
+          xp: { $ifNull: ["$xp", 0] },
+          roadmapCount: 1, 
         }
       },
       {
@@ -27,10 +28,11 @@ export async function GET(request: Request) {
           _id: "$userId",
           totalLessons: { $sum: "$lessonCount" },
           totalRoadmaps: { $count: {} },
+          totalXP: { $sum: "$xp" }
         }
       },
       {
-        $sort: { totalLessons: -1 }
+        $sort: { totalXP: -1 }
       },
       {
         $limit: 20
@@ -63,6 +65,7 @@ export async function GET(request: Request) {
         image: user?.image || null,
         totalLessons: entry.totalLessons,
         totalRoadmaps: entry.totalRoadmaps,
+        totalXP: entry.totalXP,
         rank: 0 // Will be set in the frontend
       };
     }));

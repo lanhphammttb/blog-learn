@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import mongoose from "mongoose";
+import { getUserBadges, calculateStreak } from "@/lib/gamification";
+import Vocabulary from "@/models/Vocabulary";
 
 export default async function PublicProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -44,15 +46,17 @@ export default async function PublicProfile({ params }: { params: Promise<{ id: 
     _id: { $in: progressRecords.map(r => r.roadmapId) } 
   }).select('title description slug difficulty').lean();
 
-  const getBadges = (total: number) => {
-    const badges = [];
-    if (total >= 1) badges.push({ name: 'Early Bird', icon: '🐣', color: 'bg-green-500/10 text-green-500', desc: 'Finished first lesson' });
-    if (total >= 5) badges.push({ name: 'Fast Learner', icon: '⚡', color: 'bg-blue-500/10 text-blue-500', desc: '5 Lessons completed' });
-    if (total >= 10) badges.push({ name: 'Grammar Guru', icon: '🧠', color: 'bg-purple-500/10 text-purple-500', desc: '10 Lessons completed' });
-    return badges;
-  };
+  const vocabCount = await Vocabulary.countDocuments({ userId: id });
+  const streak = calculateStreak(progressRecords);
+  const badges = getUserBadges(totalLessons, streak, vocabCount);
 
-  const badges = getBadges(totalLessons);
+  let persistenceLabel = "Ramping Up";
+  let persistenceColor = "text-yellow-400";
+  if (streak >= 7) { persistenceLabel = "Unstoppable"; persistenceColor = "text-orange-400"; }
+  else if (streak >= 3) { persistenceLabel = "High"; persistenceColor = "text-blue-400"; }
+  else if (streak >= 1) { persistenceLabel = "Active"; persistenceColor = "text-green-400"; }
+
+  const learningFocus = activeRoadmaps.length > 0 ? "Structured Paths" : "Open Explorer";
 
   return (
     <div className="min-h-screen bg-background text-foreground py-20 px-6">
@@ -85,7 +89,7 @@ export default async function PublicProfile({ params }: { params: Promise<{ id: 
                     </span>
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/10 px-4 py-1.5 text-xs font-bold text-purple-600 ring-1 ring-purple-500/20">
                       <Award className="h-3.5 w-3.5" />
-                      {badges.length} Achievements
+                      {badges.unlocked.length} Achievements
                     </span>
                  </div>
               </div>
@@ -151,14 +155,14 @@ export default async function PublicProfile({ params }: { params: Promise<{ id: 
              </h2>
              
              <div className="grid grid-cols-2 gap-4">
-               {badges.map((badge) => (
+               {badges.unlocked.map((badge) => (
                  <div key={badge.name} className="relative aspect-square rounded-[32px] bg-card border border-border flex flex-col items-center justify-center text-center p-4 shadow-xl group transition-all hover:scale-105 hover:shadow-2xl">
                     <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[32px]" />
                     <span className="text-4xl mb-3 z-10">{badge.icon}</span>
                     <p className="text-[10px] font-black uppercase tracking-widest text-foreground z-10">{badge.name}</p>
                  </div>
                ))}
-               {badges.length === 0 && (
+               {badges.unlocked.length === 0 && (
                  <div className="col-span-2 py-12 text-center text-muted-foreground text-sm font-medium">
                    Keep leaning to earn badges!
                  </div>
@@ -175,11 +179,11 @@ export default async function PublicProfile({ params }: { params: Promise<{ id: 
                 <div className="space-y-6">
                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
                       <span className="text-zinc-400 text-sm font-medium">Persistence</span>
-                      <span className="font-black text-blue-400">High</span>
+                      <span className={`font-black ${persistenceColor}`}>{persistenceLabel}</span>
                    </div>
                    <div className="flex items-center justify-between pt-4">
                       <span className="text-zinc-400 text-sm font-medium">Learning Focus</span>
-                      <span className="font-black text-purple-400">Structural</span>
+                      <span className="font-black text-purple-400">{learningFocus}</span>
                    </div>
                 </div>
              </div>

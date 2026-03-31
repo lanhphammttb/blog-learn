@@ -15,6 +15,7 @@ interface LeaderboardUser {
   image: string | null;
   totalLessons: number;
   totalRoadmaps: number;
+  totalXP: number;
   rank: number;
 }
 
@@ -73,8 +74,8 @@ export default function CommunityPage() {
                   </div>
                   <h3 className="font-bold text-lg mb-1 truncate w-full">{users[1].name}</h3>
                   <div className="flex items-center gap-2 text-zinc-500 font-bold text-sm">
-                    <Flame className="h-4 w-4" />
-                    {users[1].totalLessons} Lessons
+                    <Sparkles className="h-4 w-4 text-yellow-500" />
+                    {users[1].totalXP} XP
                   </div>
                </div>
             </div>
@@ -91,7 +92,7 @@ export default function CommunityPage() {
                   <h3 className="font-black text-2xl mb-2 truncate w-full">{users[0].name}</h3>
                   <div className="flex items-center gap-2 text-blue-100 font-bold text-lg">
                     <Sparkles className="h-5 w-5 text-yellow-300" />
-                    {users[0].totalLessons} Lessons
+                    {users[0].totalXP} XP
                   </div>
                   <div className="mt-4 text-xs font-bold uppercase tracking-widest text-blue-200">The Ultimate Learner</div>
                </div>
@@ -108,8 +109,8 @@ export default function CommunityPage() {
                   </div>
                   <h3 className="font-bold text-lg mb-1 truncate w-full">{users[2].name}</h3>
                   <div className="flex items-center gap-2 text-zinc-500 font-bold text-sm">
-                    <Flame className="h-4 w-4" />
-                    {users[2].totalLessons} Lessons
+                    <Sparkles className="h-4 w-4 text-yellow-500" />
+                    {users[2].totalXP} XP
                   </div>
                </div>
             </div>
@@ -141,8 +142,8 @@ export default function CommunityPage() {
                 <tr className="bg-muted/30">
                   <th className="px-8 py-5 text-sm font-bold text-muted-foreground uppercase tracking-widest w-24 text-center">Rank</th>
                   <th className="px-8 py-5 text-sm font-bold text-muted-foreground uppercase tracking-widest">Student</th>
+                  <th className="px-8 py-5 text-sm font-bold text-muted-foreground uppercase tracking-widest text-center">XP</th>
                   <th className="px-8 py-5 text-sm font-bold text-muted-foreground uppercase tracking-widest text-center">Lessons</th>
-                  <th className="px-8 py-5 text-sm font-bold text-muted-foreground uppercase tracking-widest text-center">Roadmaps</th>
                   <th className="px-8 py-5 text-sm font-bold text-muted-foreground uppercase tracking-widest text-right">Profile</th>
                 </tr>
               </thead>
@@ -174,11 +175,11 @@ export default function CommunityPage() {
                       </td>
                       <td className="px-8 py-6 text-center">
                         <span className="inline-flex items-center gap-1 font-black text-foreground">
-                          {user.totalLessons}
+                          {user.totalXP} XP
                         </span>
                       </td>
                       <td className="px-8 py-6 text-center">
-                        <span className="font-bold text-muted-foreground">{user.totalRoadmaps}</span>
+                        <span className="font-bold text-muted-foreground">{user.totalLessons}</span>
                       </td>
                       <td className="px-8 py-6 text-right">
                         <Link 

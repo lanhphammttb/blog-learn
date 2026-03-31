@@ -6,6 +6,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/components/AuthProvider";
 import AchievementToast from "@/components/dashboard/AchievementToast";
 import ScrollToTop from "@/components/ScrollToTop";
+import GlobalNoteWidget from "@/components/GlobalNoteWidget";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,8 +46,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Navbar />
-            <AchievementToast />
+            <ToastProvider>
+              <Navbar />
+              <AchievementToast />
+            <GlobalNoteWidget />
             <ScrollToTop />
             <main className="flex-grow fixed-nav-padding">{children}</main>
             <footer className="border-t border-border py-12 mt-12">
@@ -83,6 +87,7 @@ export default function RootLayout({
                 </div>
               </div>
             </footer>
+            </ToastProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>

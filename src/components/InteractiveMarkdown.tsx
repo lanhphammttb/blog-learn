@@ -24,10 +24,69 @@ const InteractiveMarkdown = ({
   const [completedTasks, setCompletedTasks] = useState<number[]>(initialCompletedTasks);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [highlights, setHighlights] = useState<any[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Fetch highlights
+  const fetchHighlights = async () => {
+    try {
+      const res = await fetch(`/api/user/highlights?articleId=${articleId}`);
+      if (res.ok) setHighlights(await res.json());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchHighlights();
+    const handleAdd = () => fetchHighlights();
+    window.addEventListener('article-highlight-added', handleAdd);
+    return () => window.removeEventListener('article-highlight-added', handleAdd);
+  }, [articleId]);
+
+  // Apply highlights when content renders
+  useEffect(() => {
+    if (!isMounted || highlights.length === 0) return;
+    const container = document.getElementById('interactive-markdown-container');
+    if (!container) return;
+
+    // We do a simple tree walker to find exact text nodes matching the snippet
+    // This is an MVP approach. If snippet crosses nodes, it won't highlight perfectly.
+    highlights.forEach(h => {
+       const snippet = h.textSnippet;
+       if (!snippet || snippet.length < 2) return;
+
+       const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+       let node = walker.nextNode();
+       while (node) {
+         const text = node.nodeValue || '';
+         const idx = text.indexOf(snippet);
+         
+         if (idx !== -1 && node.parentElement?.tagName !== 'MARK') {
+             // Split the text node
+             const textNode = node as Text;
+             const middle = textNode.splitText(idx);
+             middle.splitText(snippet.length);
+             
+             // Wrap with <mark>
+             const mark = document.createElement('mark');
+             mark.className = 'bg-yellow-400/40 dark:bg-yellow-500/30 text-inherit rounded-sm cursor-help relative group transition-colors hover:bg-yellow-400/60';
+             if (h.note) {
+                mark.title = h.note;
+                // Add a small indicator icon using a pseudo-element style or just append inside
+             }
+             mark.appendChild(middle.cloneNode(true));
+             middle.parentNode?.replaceChild(mark, middle);
+             break; // only highlight first occurrence per snippet to prevent marking everything
+         }
+         node = walker.nextNode();
+       }
+    });
+
+  }, [highlights, isMounted, content]);
 
   // 1. Normalize line endings to avoid character-offset shifts on Windows (\r\n vs \n)
   const normalizedContent = useMemo(() => content.replace(/\r\n/g, '\n'), [content]);
@@ -116,7 +175,7 @@ const InteractiveMarkdown = ({
   };
 
   return (
-    <div className="prose max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-blue-500 hover:prose-a:text-blue-600 prose-code:text-blue-500 transition-colors 
+    <div id="interactive-markdown-container" className="prose max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-blue-500 hover:prose-a:text-blue-600 prose-code:text-blue-500 transition-colors 
       prose-table:border-collapse prose-th:border prose-th:border-border prose-th:p-3 prose-th:bg-muted/50 prose-td:border prose-td:border-border prose-td:p-3">
       <ReactMarkdown 
         remarkPlugins={[remarkGfm]}

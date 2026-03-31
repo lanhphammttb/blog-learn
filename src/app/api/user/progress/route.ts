@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import dbConnect from '@/lib/db';
 import UserProgress from '@/models/UserProgress';
+import { awardXp } from '@/lib/user-progress';
 import mongoose from 'mongoose';
 import { rateLimit, getClientId, rateLimitResponse } from '@/lib/rateLimit';
 
@@ -67,32 +68,62 @@ export async function POST(request: Request) {
       ].filter(f => f.userId || f.email)
     });
 
-    const updateData = {
+    const updateData: any = {
       userId,
       email: email || undefined,
-      lastUpdated: Date.now()
+      lastUpdated: new Date()
     };
 
     if (completed) {
+      // XP & Streak Logic
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
       if (progressDoc) {
-        // Update existing
+        const lastActiveDate = progressDoc.lastActive ? new Date(progressDoc.lastActive) : null;
+        const lastActiveDay = lastActiveDate ? new Date(lastActiveDate.getFullYear(), lastActiveDate.getMonth(), lastActiveDate.getDate()) : null;
+        
+        let newStreak = progressDoc.streak || 0;
+        let newXP = (progressDoc.xp || 0) + 10; // +10 XP for article
+
+        if (!lastActiveDay) {
+          newStreak = 1;
+        } else {
+          const diffDays = Math.floor((today.getTime() - lastActiveDay.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays === 1) {
+            newStreak += 1; // Continuous streak
+          } else if (diffDays > 1) {
+            newStreak = 1; // Streak broken
+          }
+          // if diffDays === 0, keep streak
+        }
+
         await UserProgress.findByIdAndUpdate(progressDoc._id, {
           ...updateData,
-          $addToSet: { completedArticles: new mongoose.Types.ObjectId(articleId) }
+          $addToSet: { completedArticles: new mongoose.Types.ObjectId(articleId) },
+          $set: { 
+            streak: newStreak, 
+            lastActive: now 
+          }
         });
+        await awardXp(userId, resolvedRoadmapId, 20); // Award XP and history
       } else {
-        // Create new
+        // Create new progress record
         await UserProgress.create({
           ...updateData,
           roadmapId: resolvedRoadmapId,
-          completedArticles: [new mongoose.Types.ObjectId(articleId)]
+          completedArticles: [new mongoose.Types.ObjectId(articleId)],
+          streak: 1,
+          lastActive: now
         });
+        await awardXp(userId, resolvedRoadmapId, 20); // Award XP and history
       }
     } else {
       if (progressDoc) {
         await UserProgress.findByIdAndUpdate(progressDoc._id, {
           ...updateData,
-          $pull: { completedArticles: new mongoose.Types.ObjectId(articleId) }
+          $pull: { completedArticles: new mongoose.Types.ObjectId(articleId) },
+          // No XP reduction for un-completing for now to avoid complexity
         });
       }
     }

@@ -5,9 +5,17 @@ export interface IUserProgress extends Document {
   email?: string;
   roadmapId: mongoose.Types.ObjectId;
   completedArticles: mongoose.Types.ObjectId[];
+  completedProjects: string[]; // Stores phase titles or custom IDs
   articleTasks: Array<{
     articleId: mongoose.Types.ObjectId;
     taskIndices: number[];
+  }>;
+  projectSubmissions: Array<{
+    bossId: string;
+    content: string; // Link or Text
+    status: 'pending' | 'approved' | 'rejected';
+    submittedAt: Date;
+    feedback?: string;
   }>;
   xp: number;
   streak: number;
@@ -19,6 +27,10 @@ export interface IUserProgress extends Document {
     nextReview: Date;
     interval: number;
   }>;
+  xpHistory: Array<{
+    date: string; // YYYY-MM-DD
+    xp: number;
+  }>;
   lastUpdated: Date;
 }
 
@@ -28,10 +40,20 @@ const UserProgressSchema: Schema = new Schema(
     email: { type: String }, // Secondary stable identifier
     roadmapId: { type: Schema.Types.ObjectId, ref: 'Roadmap', required: true },
     completedArticles: [{ type: Schema.Types.ObjectId, ref: 'Article' }],
+    completedProjects: [{ type: String }],
     articleTasks: [
       {
         articleId: { type: Schema.Types.ObjectId, ref: 'Article' },
         taskIndices: [Number]
+      }
+    ],
+    projectSubmissions: [
+      {
+        bossId: String,
+        content: String,
+        status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+        submittedAt: { type: Date, default: Date.now },
+        feedback: String
       }
     ],
     xp: { type: Number, default: 0 },
@@ -46,6 +68,12 @@ const UserProgressSchema: Schema = new Schema(
         interval: { type: Number, default: 1 }
       }
     ],
+    xpHistory: [
+      {
+        date: String,
+        xp: Number
+      }
+    ],
     lastUpdated: { type: Date, default: Date.now },
   }
 );
@@ -53,6 +81,9 @@ const UserProgressSchema: Schema = new Schema(
 // Unique progress record per user per roadmap
 UserProgressSchema.index({ userId: 1, roadmapId: 1 }, { unique: true });
 
-const UserProgress: Model<IUserProgress> = mongoose.models.UserProgress || mongoose.model<IUserProgress>('UserProgress', UserProgressSchema);
+if (mongoose.models.UserProgress) {
+  delete mongoose.models.UserProgress;
+}
+const UserProgress: Model<IUserProgress> = mongoose.model<IUserProgress>('UserProgress', UserProgressSchema);
 
 export default UserProgress;

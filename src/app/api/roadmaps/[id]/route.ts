@@ -25,7 +25,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   try {
     await dbConnect();
     const body = await request.json();
-    const roadmap = await Roadmap.findByIdAndUpdate(id, body, { new: true });
+    const roadmap = await Roadmap.findByIdAndUpdate(id, body, { returnDocument: 'after' });
     return NextResponse.json(roadmap);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 });

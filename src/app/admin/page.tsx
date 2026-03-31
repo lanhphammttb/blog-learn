@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { 
   BarChart, BookOpen, Layers, MessageSquare, Plus, Search, 
-  Trash2, ExternalLink, Settings, TrendingUp, Filter, CheckCircle, Clock, Loader2, Users
+  Trash2, ExternalLink, Settings, TrendingUp, Filter, CheckCircle, Clock, Loader2, Users, ArrowRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -15,6 +15,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'articles' | 'roadmaps'>('articles');
   const [totalCompletions, setTotalCompletions] = useState(0);
   const [totalLearners, setTotalLearners] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -35,6 +36,18 @@ export default function AdminDashboard() {
       } catch (e) {}
     };
     fetchStats();
+    
+    // Fetch pending submissions count
+    const fetchPending = async () => {
+       try {
+          const res = await fetch('/api/admin/submissions');
+          if (res.ok) {
+             const data = await res.json();
+             setPendingCount(data.length);
+          }
+       } catch (e) {}
+    };
+    fetchPending();
   }, []);
 
   const fetchData = async () => {
@@ -105,17 +118,21 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+          <Link href="/admin/submissions" className="rounded-3xl border-2 border-orange-500/20 bg-orange-500/5 p-6 shadow-sm transition-all hover:bg-orange-500/10 hover:shadow-orange-500/10">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600">
-                <CheckCircle className="h-6 w-6" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-lg shadow-orange-500/30">
+                <Clock className="h-6 w-6" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Completions</p>
-                <p className="text-2xl font-bold">{totalCompletions}</p>
+              <div className="flex-1">
+                <p className="text-sm font-black text-orange-600 uppercase tracking-widest">Đợi Chấm Bài</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-black">{pendingCount}</p>
+                  <p className="text-xs font-medium text-orange-600/70">bài nộp mới</p>
+                </div>
               </div>
+              <ArrowRight className="h-5 w-5 text-orange-600" />
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Navigation Tabs */}

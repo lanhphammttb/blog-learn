@@ -9,6 +9,7 @@ import {
   Settings, ChevronDown, Sparkles, Moon, Sun, Users
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import NotificationBell from './NotificationBell';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -73,6 +74,7 @@ const Navbar = () => {
             <div className="h-6 w-px bg-border/50" />
 
             <div className="flex items-center gap-4">
+              {session && <NotificationBell />}
               <ThemeToggle />
               
               {session ? (
@@ -112,6 +114,7 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <div className="flex md:hidden items-center gap-4">
+             {session && <NotificationBell />}
              <ThemeToggle />
              <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-muted-foreground">
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
