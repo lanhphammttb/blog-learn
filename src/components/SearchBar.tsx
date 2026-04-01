@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/navigation';
+import { useTranslations } from 'next-intl';
 
 interface SearchResult {
   _id: string;
@@ -18,6 +19,7 @@ export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const t = useTranslations('Common.search');
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -62,7 +64,7 @@ export default function SearchBar() {
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Quick search..."
+        placeholder={t('placeholder')}
         className="w-full rounded-2xl border border-border bg-card py-4 pl-12 pr-10 text-sm text-foreground outline-none ring-blue-500/30 focus:ring-4 transition-all"
       />
       {query && (
@@ -77,7 +79,7 @@ export default function SearchBar() {
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-border bg-card shadow-2xl z-50 overflow-hidden">
           {loading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">Searching...</div>
+            <div className="p-4 text-center text-sm text-muted-foreground">{t('searching')}</div>
           ) : results.length > 0 ? (
             <div className="divide-y divide-border">
               {results.map((article) => (
@@ -105,7 +107,7 @@ export default function SearchBar() {
             </div>
           ) : (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              No articles found for &quot;{query}&quot;
+              {t('no_results', { query })}
             </div>
           )}
         </div>

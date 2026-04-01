@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Bell, Check, Trash2, Clock, ScrollText, Trophy, Settings } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface Notification {
   _id: string;
@@ -17,6 +18,8 @@ interface Notification {
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const t = useTranslations('Notifications');
+  const locale = useLocale();
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const fetchNotifications = async () => {
@@ -75,13 +78,13 @@ export default function NotificationBell() {
           <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)} />
           <div className="absolute right-0 mt-3 w-[320px] sm:w-[380px] rounded-[32px] border border-border bg-card shadow-2xl z-[70] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="p-5 border-b border-border/50 flex items-center justify-between bg-muted/20">
-              <h3 className="font-black text-sm uppercase tracking-widest text-foreground">Thông báo</h3>
+              <h3 className="font-black text-sm uppercase tracking-widest text-foreground">{t('title')}</h3>
               {unreadCount > 0 && (
                 <button 
                   onClick={() => markRead()}
                   className="text-[10px] font-bold text-blue-600 hover:underline"
                 >
-                  Đánh dấu tất cả đã đọc
+                  {t('mark_all_read')}
                 </button>
               )}
             </div>
@@ -90,7 +93,7 @@ export default function NotificationBell() {
               {notifications.length === 0 ? (
                 <div className="p-12 text-center text-muted-foreground">
                   <Bell className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                  <p className="text-sm font-medium">Bạn chưa có thông báo nào.</p>
+                  <p className="text-sm font-medium">{t('empty')}</p>
                 </div>
               ) : (
                 notifications.map((n) => (
@@ -99,7 +102,11 @@ export default function NotificationBell() {
                     className={`p-4 border-b border-border/30 last:border-0 hover:bg-muted/30 transition-all cursor-pointer ${!n.isRead ? 'bg-blue-500/5' : ''}`}
                     onClick={() => {
                       if (!n.isRead) markRead(n._id);
-                      if (n.link) window.location.href = n.link;
+                      if (n.link) {
+                         // Prepend locale if it's an internal link
+                         const target = n.link.startsWith('/') ? `/${locale}${n.link}` : n.link;
+                         window.location.href = target;
+                      }
                       setIsOpen(false);
                     }}
                   >
@@ -114,7 +121,7 @@ export default function NotificationBell() {
                         <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{n.message}</p>
                         <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          {new Date(n.createdAt).toLocaleDateString('vi-VN')}
+                          {new Date(n.createdAt).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US')}
                         </div>
                       </div>
                       {!n.isRead && (
@@ -127,7 +134,7 @@ export default function NotificationBell() {
             </div>
 
             <div className="p-4 bg-muted/10 text-center">
-               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Học tập mỗi ngày cùng EnglishHub</p>
+               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">{t('footer_msg')}</p>
             </div>
           </div>
         </>

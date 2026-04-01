@@ -3,6 +3,7 @@
 import React from 'react';
 import { CheckCircle2, Circle, ListTodo, Trophy, Signal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 interface Task {
   index: number;
@@ -19,6 +20,14 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
   const [completedIndices, setCompletedIndices] = React.useState<number[]>(initialCompletedIndices);
   const [stats, setStats] = React.useState(initialStats);
   const [isSyncing, setIsSyncing] = React.useState(false);
+  const t = useTranslations('Lesson');
+
+  React.useEffect(() => {
+    const guestTasks = JSON.parse(localStorage.getItem(`guest_tasks_${articleId}`) || '[]');
+    if (guestTasks.length > 0 && initialCompletedIndices.length === 0) {
+      setCompletedIndices(guestTasks);
+    }
+  }, [articleId, initialCompletedIndices.length]);
 
   // We need to listen for task updates from InteractiveMarkdown
   React.useEffect(() => {
@@ -59,6 +68,17 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
           completed: !isDone
         })
       });
+
+      if (res.status === 401) {
+        const guestTasks = JSON.parse(localStorage.getItem(`guest_tasks_${articleId}`) || '[]');
+        const newTasks = guestTasks.includes(index) ? guestTasks.filter((i: number) => i !== index) : [...guestTasks, index];
+        localStorage.setItem(`guest_tasks_${articleId}`, JSON.stringify(newTasks));
+        
+        setCompletedIndices(newTasks);
+        window.dispatchEvent(new CustomEvent('article-tasks-updated', { detail: { taskIndices: newTasks } }));
+        setIsSyncing(false);
+        return;
+      }
 
       const data = await res.json();
       if (data.success && data.completedTasks) {
@@ -123,7 +143,7 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
             <div className="flex flex-col items-center gap-1 p-2 rounded-xl bg-card border border-border">
               <Trophy className="h-4 w-4 text-yellow-500" />
               <span className="text-xs font-bold text-foreground">{stats.xp} XP</span>
-              <span className="text-[8px] uppercase tracking-tighter text-muted-foreground font-bold">Earned</span>
+              <span className="text-[8px] uppercase tracking-tighter text-muted-foreground font-bold">{t('xp_earned')}</span>
             </div>
             <div className="flex flex-col items-center gap-1 p-2 rounded-xl bg-card border border-border">
               <motion.div
@@ -132,8 +152,8 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
               >
                 <Signal className="h-4 w-4 text-orange-500 fill-orange-500" />
               </motion.div>
-              <span className="text-xs font-bold text-foreground">{stats.streak} Days</span>
-              <span className="text-[8px] uppercase tracking-tighter text-muted-foreground font-bold">Streak</span>
+              <span className="text-xs font-bold text-foreground">{stats.streak} {t('days')}</span>
+              <span className="text-[8px] uppercase tracking-tighter text-muted-foreground font-bold">{t('streak')}</span>
             </div>
           </div>
         </div>
@@ -142,7 +162,7 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
           <div className="flex items-center justify-between mb-6">
           <h3 className="flex items-center gap-2 text-sm font-bold text-foreground">
             <ListTodo className="h-4 w-4 text-blue-500" />
-            Lesson Tasks
+            {t('tasks')}
           </h3>
           <span className="text-xs font-bold text-muted-foreground">{completedIndices.length}/{tasks.length}</span>
         </div>
@@ -158,7 +178,7 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
             />
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Progress</span>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">{t('progress')}</span>
             <span className="text-[10px] font-bold text-blue-500">{progress}%</span>
           </div>
         </div>
@@ -205,7 +225,7 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
             className="mt-6 flex items-center gap-2 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400"
           >
             <Trophy className="h-4 w-4" />
-            <span className="text-xs font-bold">Excellent! Lesson clear.</span>
+            <span className="text-xs font-bold">{t('excellent')}</span>
           </motion.div>
         )}
 

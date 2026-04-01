@@ -1,0 +1,252 @@
+{
+  "Roadmap": {
+    "title": "Learning Path",
+    "list_badge": "Learning Roadmaps",
+    "list_title_start": "Choose your",
+    "list_title_highlight": "Path",
+    "list_title_end": "to Fluency.",
+    "description": "Follow structured curricula designed by experts. Track your progress, earn achievements, and master English step-by-step.",
+    "lessons_count": "lessons",
+    "structured_path": "Structured Path",
+    "empty_state": {
+      "title": "No roadmaps published yet",
+      "desc": "We are crafting the perfect paths for you. Stay tuned!",
+      "back": "Back to all lessons"
+    },
+    "progress": "Progress",
+    "completed": "Completed",
+    "locked": "Locked",
+    "next": "Study Next",
+    "phase": "Phase",
+    "auxiliary": "Auxiliary",
+    "lesson": "Lesson",
+    "boss": {
+      "title": "Boss Challenge",
+      "requirements": "Mission Requirements:",
+      "submit": "Submit & Conquer",
+      "pending": "Grading...",
+      "pending_status": "System is grading...",
+      "approved": "Mastered",
+      "rejected": "Rejected - Resubmit",
+      "resubmit": "Rejected - Resubmit",
+      "feedback": "AI Feedback:",
+      "locked": "Boss Locked",
+      "locked_desc": "Complete all lessons in this phase to unlock the Boss.",
+      "submit_label": "Submit Work (Link or Content):",
+      "placeholder": "Paste Drive link, YouTube video URL, or summary of your work here...",
+      "submit_action": "Submit & Conquer"
+    },
+    "congrats": {
+       "title": "Excellent!",
+       "description": "You've fully mastered this path.",
+       "next_roadmap": "Continue Journey"
+    },
+    "progress_button": {
+       "locked": "Locked",
+       "tasks_required": "Complete all tasks ({current}/{total})",
+       "completed": "Lesson Completed!",
+       "mark_completed": "Mark as Completed"
+    },
+    "details": {
+       "back": "Back to Roadmaps",
+       "target": "Target",
+       "learning_path": "Learning Path",
+       "goal": "Goal",
+       "start": "Start",
+       "not_found": "Roadmap Not Found"
+    }
+  },
+  "Common": {
+    "nav": {
+      "home": "Home",
+      "community": "Community",
+      "my_learning": "My Learning",
+      "sign_in": "Sign In",
+      "sign_out": "Sign Out"
+    },
+    "loading": "Loading...",
+    "success": "Success!",
+    "error": "An error occurred",
+    "cancel": "Cancel",
+    "pagination": {
+      "prev": "Prev",
+      "next": "Next"
+    },
+    "search": {
+      "placeholder": "Quick search...",
+      "searching": "Searching...",
+      "no_results": "No articles found for \"{query}\""
+    }
+  },
+  "Lesson": {
+    "tasks": "Lesson Tasks",
+    "xp_earned": "Earned",
+    "streak": "Streak",
+    "days": "Days",
+    "progress": "Progress",
+    "excellent": "Excellent! Lesson clear.",
+    "listen": "Listen"
+  },
+  "Article": {
+    "back_roadmap": "Back to roadmap",
+    "back_articles": "Back to articles",
+    "part_of": "Part of:",
+    "series_progress": "Series Progress",
+    "finished_title": "Finished this lesson?",
+    "finished_desc": "Mark this lesson as completed to track your learning progress on the roadmap.",
+    "prev_lesson": "Previous Lesson",
+    "next_lesson": "Next Lesson",
+    "milestone": "Milestone Reached",
+    "end_msg": "You've reached the end!",
+    "focus_enter": "Enter Focus Mode",
+    "focus_exit": "Exit Focus Mode",
+    "not_found": "Article Not Found"
+  },
+  "Certificate": {
+    "login_title": "Please Sign In",
+    "login_desc": "You need to be signed in to view your personal certificate.",
+    "login_btn": "Sign In Now",
+    "not_eligible_title": "Not Yet Eligible",
+    "not_eligible_desc": "You need to complete all lessons and pass all Boss challenges to receive this certificate.",
+    "lessons": "Lessons:",
+    "boss": "Boss:",
+    "continue_learning": "Continue Learning",
+    "back_roadmap": "Back to Roadmap",
+    "share": "Share",
+    "download": "Download PDF",
+    "title_badge": "Certificate of Completion",
+    "main_title": "ROADMAP CONQUERED",
+    "sub_title": "Certificate of Roadmap Completion",
+    "recognize": "This is to certify that",
+    "description": "Has demonstrated persistent effort and successfully completed the comprehensive learning path",
+    "at_platform": "at the **EnglishHub** education platform.",
+    "platform_label": "Learning Platform",
+    "issue_date": "Issue Date",
+    "cert_code": "Certificate ID:",
+    "footer_quote": "A journey of a thousand miles begins with a single step. You have completed an important mile.",
+    "footer_regards": "EnglishHub is proud to accompany your growth!"
+  },
+  "Home": {
+    "hero_badge": "Smart English Learning Platform",
+    "hero_title_start": "Level up your ",
+    "hero_title_highlight": "English",
+    "hero_title_end": " skills.",
+    "hero_desc": "Personalized learning paths, daily lessons, and structured roadmaps to master English comfortably.",
+    "explore_btn": "Explore Roadmaps",
+    "structured_paths": "Structured Paths",
+    "view_all": "View all",
+    "lessons_count": "{count} Lessons",
+    "latest_lessons": "Latest Lessons",
+    "no_lessons": "No lessons found",
+    "create_now": "Create one now"
+  },
+  "ArticleCard": {
+    "start": "Start Lesson"
+  },
+  "Footer": {
+    "description": "A personal platform for learning and mastering English through structured roadmaps and interactive lessons.",
+    "navigate": "Navigate",
+    "features": {
+      "title": "Features",
+      "interactive": "Interactive Lessons",
+      "roadmap": "Learning Roadmaps",
+      "tracking": "Progress Tracking",
+      "leaderboard": "Community Leaderboard"
+    },
+    "copyright": "Built for learning."
+  },
+  "Notifications": {
+    "title": "Notifications",
+    "mark_all_read": "Mark all as read",
+    "empty": "You have no notifications yet.",
+    "footer_msg": "Learn every day with EnglishHub"
+  },
+  "Community": {
+    "title": "Community",
+    "highlight": "Leaderboard",
+    "description": "Celebrate our top learners and find inspiration for your own English journey.",
+    "rankings_title": "Global Rankings",
+    "search_placeholder": "Search student...",
+    "table": {
+      "rank": "Rank",
+      "student": "Student",
+      "xp": "XP",
+      "lessons": "Lessons",
+      "profile": "Profile"
+    },
+    "view_profile": "View",
+    "no_students": "No students found...",
+    "learner_label": "Certified Learner",
+    "ultimate_label": "The Ultimate Learner"
+  },
+  "Dashboard": {
+    "title": "Student Dashboard",
+    "welcome": "Welcome back, {name}!",
+    "stats": {
+      "lessons": "Lessons Done",
+      "streak": "Current Streak",
+      "paths": "Active Paths",
+      "skill": "Skill Level",
+      "day": "Day",
+      "days": "Days"
+    },
+    "active_paths": {
+      "title": "Active Learning Paths",
+      "explore": "Explore More",
+      "empty": {
+        "title": "Start your first roadmap",
+        "desc": "Roadmaps help you stay focused and learn faster.",
+        "btn": "Discover Paths"
+      },
+      "complete": "Complete"
+    },
+    "recent_activity": {
+      "title": "Recent Activity",
+      "completed": "Completed \"{title}\"",
+      "empty": "No activity yet. Start learning to see your progress here!",
+      "today": "Today",
+      "yesterday": "1 day ago",
+      "days_ago": "{count} days ago"
+    },
+    "tools": {
+       "title": "Tools",
+       "vocab": {
+         "title": "My Vocabulary",
+         "desc": "Flashcards Vault"
+       },
+       "notebook": {
+         "title": "Notebook",
+         "desc": "Quick Notes"
+       }
+    },
+    "badges": {
+       "title": "My Badges",
+       "empty": "Complete lessons to earn badges!",
+       "locked": "Locked Badges"
+    }
+  },
+  "Vocabulary": {
+    "title": "My Vocabulary",
+    "description": "Words and flashcards you've saved while reading lessons.",
+    "back": "Back to Dashboard",
+    "search": "Search your saved words...",
+    "modes": {
+       "grid": "Grid View",
+       "practice": "Practice"
+    },
+    "loading": "Loading your flashcards...",
+    "empty": {
+       "title": "No words found!",
+       "desc_search": "Couldn't find any words matching your search.",
+       "desc_empty": "You haven't saved any words yet. Read lessons and double-click any word to save it to your flashcards.",
+       "action": "Go read something"
+    },
+    "practice": {
+       "card": "Card {current} / {total}",
+       "mode_label": "Practice Mode",
+       "prev": "Previous",
+       "next": "Next"
+    },
+    "stored": "Stored"
+  }
+}

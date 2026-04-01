@@ -1,0 +1,252 @@
+{
+  "Roadmap": {
+    "title": "Lộ trình học tập",
+    "list_badge": "Lộ trình học tập",
+    "list_title_start": "Chọn",
+    "list_title_highlight": "Con đường",
+    "list_title_end": "đến sự thành thạo.",
+    "description": "Theo dõi các chương trình học được thiết kế bởi các chuyên gia. Theo dõi tiến trình, đạt thành tích và làm chủ tiếng Anh từng bước một.",
+    "lessons_count": "bài học",
+    "structured_path": "Lộ trình bài bản",
+    "empty_state": {
+      "title": "Chưa có lộ trình nào được xuất bản",
+      "desc": "Chúng tôi đang xây dựng những lộ trình hoàn hảo cho bạn. Hãy chờ xem!",
+      "back": "Quay lại tất cả bài học"
+    },
+    "progress": "Tiến độ",
+    "completed": "Hoàn thành",
+    "locked": "Chưa mở khóa",
+    "next": "Học Tiếp",
+    "phase": "Giai Đoạn",
+    "auxiliary": "Phụ Trợ",
+    "lesson": "Bài",
+    "boss": {
+      "title": "Thách đấu Boss",
+      "requirements": "Yêu cầu nhiệm vụ:",
+      "submit": "Nộp bài & Phá Đảo",
+      "pending": "Đang chấm bài...",
+      "pending_status": "Hệ thống đang chấm bài...",
+      "approved": "Đã Chinh Phục",
+      "rejected": "Bị từ chối - Nộp lại bài",
+      "resubmit": "Bị từ chối - Nộp lại bài",
+      "feedback": "Phản hồi từ AI:",
+      "locked": "Boss Đang Khoá",
+      "locked_desc": "Cần hoàn thành tất cả bài học trong giai đoạn này để mở khoá Boss.",
+      "submit_label": "Nộp bài làm (Link hoặc Nội dung):",
+      "placeholder": "Dán link Drive, Youtube bài tập, hoặc tóm tắt bài làm tại đây...",
+      "submit_action": "Nộp bài & Phá Đảo"
+    },
+    "congrats": {
+       "title": "Tuyệt Vời!",
+       "description": "Bạn đã chinh phục hoàn toàn chặng đường này.",
+       "next_roadmap": "Tiếp tục hành trình"
+    },
+    "progress_button": {
+       "locked": "Bị Khóa",
+       "tasks_required": "Hoàn thành tất cả nhiệm vụ ({current}/{total})",
+       "completed": "Đã Hoàn Thành!",
+       "mark_completed": "Đánh dấu hoàn thành"
+    },
+    "details": {
+       "back": "Quay lại lộ trình",
+       "target": "Mục tiêu",
+       "learning_path": "Lộ trình học",
+       "goal": "Mục tiêu",
+       "start": "Bắt đầu",
+       "not_found": "Không tìm thấy lộ trình"
+    }
+  },
+  "Common": {
+    "nav": {
+      "home": "Trang chủ",
+      "community": "Cộng đồng",
+      "my_learning": "Học tập",
+      "sign_in": "Đăng nhập",
+      "sign_out": "Đăng xuất"
+    },
+    "loading": "Đang tải...",
+    "success": "Thành công!",
+    "error": "Có lỗi xảy ra",
+    "cancel": "Hủy",
+    "pagination": {
+      "prev": "Trước",
+      "next": "Sau"
+    },
+    "search": {
+       "placeholder": "Tìm kiếm nhanh...",
+       "searching": "Đang tìm kiếm...",
+       "no_results": "Không tìm thấy bài viết cho \"{query}\""
+    }
+  },
+  "Lesson": {
+    "tasks": "Nhiệm vụ bài học",
+    "xp_earned": "Đã nhận",
+    "streak": "Chuỗi ngày",
+    "days": "Ngày",
+    "progress": "Tiến độ",
+    "excellent": "Tuyệt vời! Đã hoàn thành bài học.",
+    "listen": "Nghe"
+  },
+  "Article": {
+    "back_roadmap": "Quay lại lộ trình",
+    "back_articles": "Quay lại bài viết",
+    "part_of": "Thuộc series:",
+    "series_progress": "Tiến độ Series",
+    "finished_title": "Hoàn thành bài học này?",
+    "finished_desc": "Đánh dấu bài học này là hoàn thành để theo dõi tiến trình học tập của bạn.",
+    "prev_lesson": "Bài học trước",
+    "next_lesson": "Bài học tiếp theo",
+    "milestone": "Đạt mốc quan trọng",
+    "end_msg": "Bạn đã đi đến cuối lộ trình!",
+    "focus_enter": "Chế độ tập trung",
+    "focus_exit": "Thoát chế độ tập trung",
+    "not_found": "Không tìm thấy bài viết"
+  },
+  "Certificate": {
+    "login_title": "Vui lòng đăng nhập",
+    "login_desc": "Bạn cần đăng nhập để xem chứng chỉ cá nhân.",
+    "login_btn": "Đăng nhập ngay",
+    "not_eligible_title": "Chưa đủ điều kiện",
+    "not_eligible_desc": "Bạn cần hoàn thành tất cả các bài học và vượt qua toàn bộ thử thách Boss để nhận chứng chỉ này.",
+    "lessons": "Bài học:",
+    "boss": "Boss:",
+    "continue_learning": "Tiếp tục học tập",
+    "back_roadmap": "Quay lại Roadmap",
+    "share": "Chia sẻ",
+    "download": "Tải về PDF",
+    "title_badge": "Chứng chỉ hoàn thành",
+    "main_title": "CHINH PHỤC LỘ TRÌNH",
+    "sub_title": "Certificate of Roadmap Completion",
+    "recognize": "Trân trọng chứng nhận học viên",
+    "description": "Đã nỗ lực bền bỉ và xuất sắc vượt qua toàn diện lộ trình học tập",
+    "at_platform": "tại nền tảng giáo dục **EnglishHub**.",
+    "platform_label": "Nền tảng học tập",
+    "issue_date": "Ngày cấp chứng chỉ",
+    "cert_code": "Mã số chứng chỉ:",
+    "footer_quote": "Hành trình vạn dặm bắt đầu từ một bước chân. Bạn đã hoàn thành một dặm đường quan trọng.",
+    "footer_regards": "EnglishHub tự hào đồng hành cùng sự phát triển của bạn!"
+  },
+  "Home": {
+    "hero_badge": "Nền tảng học tiếng Anh thông minh",
+    "hero_title_start": "Nâng tầm kỹ năng ",
+    "hero_title_highlight": "Tiếng Anh",
+    "hero_title_end": " của bạn.",
+    "hero_desc": "Lộ trình học tập cá nhân hóa, bài học hàng ngày và các khóa học bài bản giúp bạn làm chủ tiếng Anh một cách thoải mái.",
+    "explore_btn": "Khám phá lộ trình",
+    "structured_paths": "Lộ trình bài bản",
+    "view_all": "Xem tất cả",
+    "lessons_count": "{count} Bài học",
+    "latest_lessons": "Bài học mới nhất",
+    "no_lessons": "Không tìm thấy bài học nào",
+    "create_now": "Tạo bài học ngay"
+  },
+  "ArticleCard": {
+    "start": "Bắt đầu học"
+  },
+  "Footer": {
+    "description": "Nền tảng cá nhân để học và làm chủ tiếng Anh thông qua các lộ trình bài bản và bài học tương tác.",
+    "navigate": "Điều hướng",
+    "features": {
+      "title": "Tính năng",
+      "interactive": "Bài học tương tác",
+      "roadmap": "Lộ trình học tập",
+      "tracking": "Theo dõi tiến độ",
+      "leaderboard": "Bảng xếp hạng"
+    },
+    "copyright": "Được xây dựng để học tập."
+  },
+  "Notifications": {
+    "title": "Thông báo",
+    "mark_all_read": "Đánh dấu tất cả đã đọc",
+    "empty": "Bạn chưa có thông báo nào.",
+    "footer_msg": "Học mỗi ngày cùng EnglishHub"
+  },
+  "Community": {
+    "title": "Cộng đồng",
+    "highlight": "Bảng xếp hạng",
+    "description": "Vinh danh những học viên xuất sắc nhất và tìm cảm hứng cho hành trình chinh phục tiếng Anh của bạn.",
+    "rankings_title": "Xếp hạng toàn cầu",
+    "search_placeholder": "Tìm kiếm học viên...",
+    "table": {
+      "rank": "Hạng",
+      "student": "Học viên",
+      "xp": "XP",
+      "lessons": "Bài học",
+      "profile": "Hồ sơ"
+    },
+    "view_profile": "Xem",
+    "no_students": "Không tìm thấy học viên nào...",
+    "learner_label": "Học viên chính thức",
+    "ultimate_label": "Học viên xuất sắc nhất"
+  },
+  "Dashboard": {
+    "title": "Bảng điều khiển học viên",
+    "welcome": "Chào mừng quay trở lại, {name}!",
+    "stats": {
+      "lessons": "Bài học hoàn thành",
+      "streak": "Chuỗi ngày học",
+      "paths": "Lộ trình đang theo",
+      "skill": "Trình độ",
+      "day": "Ngày",
+      "days": "Ngày"
+    },
+    "active_paths": {
+      "title": "Lộ trình đang học",
+      "explore": "Khám phá thêm",
+      "empty": {
+        "title": "Bắt đầu lộ trình đầu tiên của bạn",
+        "desc": "Lộ trình học tập giúp bạn tập trung và học nhanh hơn.",
+        "btn": "Khám phá lộ trình"
+      },
+      "complete": "Hoàn thành"
+    },
+    "recent_activity": {
+      "title": "Hoạt động gần đây",
+      "completed": "Đã hoàn thành \"{title}\"",
+      "empty": "Chưa có hoạt động nào. Hãy bắt đầu học để thấy tiến độ của bạn!",
+      "today": "Hôm nay",
+      "yesterday": "1 ngày trước",
+      "days_ago": "{count} ngày trước"
+    },
+    "tools": {
+       "title": "Công cụ",
+       "vocab": {
+         "title": "Từ vựng của tôi",
+         "desc": "Kho thẻ ghi nhớ"
+       },
+       "notebook": {
+         "title": "Sổ tay",
+         "desc": "Ghi chú nhanh"
+       }
+    },
+    "badges": {
+       "title": "Huy hiệu của tôi",
+       "empty": "Hoàn thành bài học để nhận huy hiệu!",
+       "locked": "Huy hiệu chưa mở khóa"
+    }
+  },
+  "Vocabulary": {
+    "title": "Từ vựng của tôi",
+    "description": "Những từ vựng và thẻ ghi nhớ bạn đã lưu trong quá trình học bài.",
+    "back": "Quay lại Bảng điều khiển",
+    "search": "Tìm kiếm từ vựng đã lưu...",
+    "modes": {
+       "grid": "Bảng từ",
+       "practice": "Luyện tập"
+    },
+    "loading": "Đang tải thẻ ghi nhớ...",
+    "empty": {
+       "title": "Không tìm thấy từ nào!",
+       "desc_search": "Không tìm thấy từ nào khớp với tìm kiếm của bạn.",
+       "desc_empty": "Bạn chưa lưu từ nào. Hãy đọc các bài viết và nhấp đúp vào bất kỳ từ nào để lưu vào thẻ ghi nhớ.",
+       "action": "Đọc bài học ngay"
+    },
+    "practice": {
+       "card": "Thẻ {current} / {total}",
+       "mode_label": "Chế độ luyện tập",
+       "prev": "Trước",
+       "next": "Tiếp"
+    },
+    "stored": "Đã lưu"
+  }
+}

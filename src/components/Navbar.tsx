@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import { usePathname, useRouter, Link } from '@/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { 
   Menu, X, BookOpen, Layers, User, LogOut, 
   Settings, ChevronDown, Sparkles, Moon, Sun, Users
@@ -15,6 +15,10 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('Common');
+  const navT = useTranslations('Roadmap');
   const { data: session } = useSession();
 
   useEffect(() => {
@@ -26,10 +30,10 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: 'Home', href: '/', icon: BookOpen },
-    { name: 'Roadmaps', href: '/roadmaps', icon: Layers },
-    { name: 'Community', href: '/community', icon: Users },
-    { name: 'My Learning', href: '/dashboard', icon: User, hidden: !session },
+    { name: t('nav.home'), href: '/', icon: BookOpen },
+    { name: navT('title'), href: '/roadmaps', icon: Layers },
+    { name: t('nav.community'), href: '/community', icon: Users },
+    { name: t('nav.my_learning'), href: '/dashboard', icon: User, hidden: !session },
   ].filter(l => !l.hidden);
 
   const isAdmin = (session?.user as any)?.role === 'admin';
@@ -77,6 +81,17 @@ const Navbar = () => {
               {session && <NotificationBell />}
               <ThemeToggle />
               
+              {/* Language Switcher */}
+               <button 
+                  onClick={() => {
+                     const nextLocale = locale === 'en' ? 'vi' : 'en';
+                     router.replace(pathname, { locale: nextLocale });
+                  }}
+                  className="flex h-9 w-12 items-center justify-center rounded-xl bg-muted border border-border text-[10px] font-black uppercase tracking-tighter hover:border-blue-500/50 transition-all font-mono"
+               >
+                  {locale === 'en' ? 'VN' : 'EN'}
+               </button>
+              
               {session ? (
                 <div className="relative group">
                    <button className="flex items-center gap-2 rounded-xl bg-card border border-border p-1 pr-3 transition-all hover:border-blue-500/50">
@@ -97,7 +112,7 @@ const Navbar = () => {
                         className="w-full flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-500/10 transition-all"
                       >
                          <LogOut className="h-4 w-4" />
-                         Sign Out
+                         {t('nav.sign_out')}
                       </button>
                    </div>
                 </div>
@@ -106,7 +121,7 @@ const Navbar = () => {
                   href="/login"
                   className="rounded-2xl bg-foreground px-6 py-2.5 text-sm font-bold text-background transition-all hover:opacity-90 active:scale-95 shadow-xl shadow-foreground/5"
                 >
-                  Sign In
+                  {t('nav.sign_in')}
                 </Link>
               )}
             </div>
@@ -116,6 +131,15 @@ const Navbar = () => {
           <div className="flex md:hidden items-center gap-4">
              {session && <NotificationBell />}
              <ThemeToggle />
+             <button 
+                  onClick={() => {
+                     const nextLocale = locale === 'en' ? 'vi' : 'en';
+                     router.replace(pathname, { locale: nextLocale });
+                  }}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted border border-border text-[10px] font-black uppercase font-mono"
+               >
+                  {locale === 'en' ? 'VN' : 'EN'}
+               </button>
              <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-muted-foreground">
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
              </button>

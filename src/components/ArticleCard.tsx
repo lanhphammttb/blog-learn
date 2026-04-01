@@ -1,5 +1,6 @@
-import Link from 'next/link';
 import { Calendar, Tag, ChevronRight, Signal } from 'lucide-react';
+import { Link } from '@/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface ArticleCardProps {
   article: {
@@ -14,8 +15,11 @@ interface ArticleCardProps {
   };
 }
 
-const ArticleCard = ({ article }: ArticleCardProps) => {
-  const formattedDate = new Date(article.createdAt).toLocaleDateString('en-US', {
+ const ArticleCard = ({ article }: ArticleCardProps) => {
+  const t = useTranslations('ArticleCard');
+  const locale = useLocale();
+
+  const formattedDate = new Date(article.createdAt).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -67,11 +71,11 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
         </p>
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
-          <Link
+           <Link
             href={`/articles/${article.slug}`}
             className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Start Lesson
+            {t('start')}
             <ChevronRight className="h-4 w-4" />
           </Link>
           
