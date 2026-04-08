@@ -20,6 +20,7 @@ export default function ProgressButton({ articleId, roadmapId, initialCompleted 
   const [loading, setLoading] = useState(false);
   const [completedTaskCount, setCompletedTaskCount] = useState(initialCompletedTaskCount || 0);
   const t = useTranslations('Roadmap');
+  const commonT = useTranslations('Common');
 
   // Sync tasks from local storage strictly for guests on mount
   useEffect(() => {
@@ -74,10 +75,10 @@ export default function ProgressButton({ articleId, roadmapId, initialCompleted 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ articleId, roadmapId: roadmapId || undefined, completed: true }),
       });
-      if (res.ok) {
-        unlockAchievement('first-lesson', 'Early Bird', 'You completed your first lesson! 🐣');
-        setCompleted(true);
-      }
+        if (res.ok) {
+          unlockAchievement('first-lesson', commonT('achievements.first_lesson_title'), commonT('achievements.first_lesson_desc'));
+          setCompleted(true);
+        }
     } catch (error) {
       console.error(error);
     } finally {
@@ -110,7 +111,7 @@ export default function ProgressButton({ articleId, roadmapId, initialCompleted 
       });
       if (res.ok) {
         if (!completed) {
-          unlockAchievement('first-lesson', 'Early Bird', 'You completed your first lesson! 🐣');
+          unlockAchievement('first-lesson', commonT('achievements.first_lesson_title'), commonT('achievements.first_lesson_desc'));
         }
         setCompleted(!completed);
       }

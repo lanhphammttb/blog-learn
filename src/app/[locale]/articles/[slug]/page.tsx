@@ -10,6 +10,7 @@ import { auth } from '@/auth';
 import UserProgress from '@/models/UserProgress';
 import mongoose from 'mongoose';
 import type { Metadata } from 'next';
+import { getLocalizedField } from '@/lib/i18n-db';
 
 import Roadmap from '@/models/Roadmap';
 import LessonNavigation from '@/components/roadmap/LessonNavigation';
@@ -31,12 +32,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: t('not_found') || 'Article Not Found' };
   }
 
+  const title = getLocalizedField(article, 'title', locale);
+  const excerpt = getLocalizedField(article, 'excerpt', locale);
+
   return {
-    title: `${article.title} | EnglishHub`,
-    description: article.excerpt || `Learn English: ${article.title}`,
+    title: `${title} | EnglishHub`,
+    description: excerpt || `Learn English: ${title}`,
     openGraph: {
-      title: article.title,
-      description: article.excerpt || `Learn English: ${article.title}`,
+      title: title,
+      description: excerpt || `Learn English: ${title}`,
       type: 'article',
     },
   };
@@ -126,8 +130,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
+  const localizedTitle = getLocalizedField(article, 'title', locale);
+  const localizedContent = getLocalizedField(article, 'content', locale);
+  const localizedExcerpt = getLocalizedField(article, 'excerpt', locale);
+
   const taskRegex = /[*-] \[[ xX]\] (.*)/g;
-  const tasks = [...article.content.matchAll(taskRegex)].map((match, index) => ({
+  const tasks = [...localizedContent.matchAll(taskRegex)].map((match, index) => ({
     index,
     label: match[1].trim()
   }));
@@ -201,19 +209,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
                 )}
 
                 <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
-                  {article.title}
+                  {localizedTitle}
                 </h1>
                 
                 <p className="text-xl leading-8 text-muted-foreground mb-8">
-                  {article.excerpt}
+                  {localizedExcerpt}
                 </p>
 
-                <ArticleAudioPlayer content={article.content} title={article.title} />
+                <ArticleAudioPlayer content={localizedContent} title={localizedTitle} />
               </header>
 
               <div className="border-t border-border pt-12">
                 <InteractiveMarkdown 
-                  content={article.content} 
+                  content={localizedContent}  
                   articleId={article._id.toString()}
                   roadmapId={roadmapId}
                   initialCompletedTasks={initialCompletedTasks}

@@ -52,7 +52,7 @@ export default function QuickNote({ isLoggedIn }: { isLoggedIn: boolean }) {
     if (!title.trim() || !content.trim()) return;
 
     setIsSaving(true);
-    let articleId = null;
+    const articleId = null;
     
     // Nếu đang ở trang bài đọc, tự động lưu articleId
     if (pathname.includes('/articles/')) {

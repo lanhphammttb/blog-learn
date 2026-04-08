@@ -72,10 +72,21 @@
       "prev": "Trước",
       "next": "Sau"
     },
+    "achievements": {
+       "first_lesson_title": "Chú chim sớm",
+       "first_lesson_desc": "Bạn đã hoàn thành bài học đầu tiên! 🐣"
+    },
     "search": {
        "placeholder": "Tìm kiếm nhanh...",
        "searching": "Đang tìm kiếm...",
        "no_results": "Không tìm thấy bài viết cho \"{query}\""
+    },
+    "status": {
+      "published": "Đã đăng",
+      "draft": "Bản nháp",
+      "beginner": "Cơ bản",
+      "intermediate": "Trung bình",
+      "advanced": "Nâng cao"
     }
   },
   "Lesson": {
@@ -200,6 +211,12 @@
       },
       "complete": "Hoàn thành"
     },
+    "levels": {
+      "Beginner": "Ngôn ngữ cơ bản",
+      "Elementary": "Sơ cấp",
+      "Intermediate": "Trung cấp",
+      "Advanced": "Cao cấp"
+    },
     "recent_activity": {
       "title": "Hoạt động gần đây",
       "completed": "Đã hoàn thành \"{title}\"",
@@ -207,6 +224,13 @@
       "today": "Hôm nay",
       "yesterday": "1 ngày trước",
       "days_ago": "{count} ngày trước"
+    },
+    "chart": {
+      "title": "Biểu đồ tăng trưởng",
+      "desc": "Lượng XP tích luỹ trong 7 ngày qua",
+      "learning": "Học tập",
+      "resting": "Nghỉ ngơi",
+      "auto_update": "Dữ liệu tự động cập nhật"
     },
     "tools": {
        "title": "Công cụ",
@@ -248,5 +272,36 @@
        "next": "Tiếp"
     },
     "stored": "Đã lưu"
+  },
+  "Admin": {
+    "stats": {
+      "total_articles": "Tổng số bài viết",
+      "active_roadmaps": "Lộ trình hoạt động",
+      "total_learners": "Tổng số học viên",
+      "pending_submissions": "Đợi Chấm Bài",
+      "new_submissions_hint": "bài nộp mới"
+    },
+    "tabs": {
+      "articles": "Bài viết",
+      "roadmaps": "Lộ trình"
+    },
+    "actions": {
+      "create_new": "Tạo mới",
+      "search_placeholder": "Tìm kiếm {type}...",
+      "delete_confirm": "Bạn có chắc chắn muốn xóa {type} này không?",
+      "edit": "Chỉnh sửa",
+      "view": "Xem",
+      "delete": "Xóa"
+    },
+    "table": {
+      "title": "Tiêu đề",
+      "category": "Danh mục",
+      "difficulty": "Độ khó",
+      "date": "Ngày tạo",
+      "status": "Trạng thái",
+      "actions": "Hành động",
+      "no_data": "Không tìm thấy {type}. Nhấp vào \"Tạo mới\" để bắt đầu.",
+      "steps": "bước"
+    }
   }
 }

@@ -32,6 +32,8 @@ export default async function LearnerDashboard({ params }: { params: Promise<{ l
 
   const t = await getTranslations({ locale, namespace: 'Dashboard' });
   await dbConnect();
+  // Force Mongoose to register the model in Turbopack environments
+  if (!Roadmap) console.warn('Roadmap model init failed');
   const userId = (session.user as any).id;
 
   // Fetch all user progress
@@ -95,8 +97,12 @@ export default async function LearnerDashboard({ params }: { params: Promise<{ l
   };
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-12 px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
+    <div className="min-h-screen bg-background relative overflow-hidden pt-24 pb-12 px-6 lg:px-8">
+      {/* Background Ambient Aura */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none opacity-50 dark:opacity-20 animate-pulse" />
+      <div className="absolute top-0 right-0 w-[500px] h-[300px] bg-purple-500/10 blur-[120px] rounded-full pointer-events-none opacity-50 dark:opacity-20 inline-block" />
+
+      <div className="mx-auto max-w-7xl relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <header className="mb-12">
           <div className="flex items-center gap-3 mb-2">
              <span className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">{t('title')}</span>
@@ -104,47 +110,48 @@ export default async function LearnerDashboard({ params }: { params: Promise<{ l
           </div>
           <h1 className="text-4xl font-black text-foreground sm:text-5xl flex items-center gap-4">
              {t('welcome', { name: session.user.name?.split(' ')[0] || '' })}
-             <span className="inline-block animate-bounce">👋</span>
+             <span className="inline-block animate-bounce origin-bottom">👋</span>
           </h1>
         </header>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <div className="rounded-3xl border border-border bg-card p-8 shadow-xl hover:shadow-2xl transition-all">
+          <div className="group rounded-3xl border border-border bg-card/60 backdrop-blur-sm p-8 shadow-xl hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/30 hover:-translate-y-1 transition-all duration-300">
              <div className="flex items-center gap-4 mb-4">
-               <div className="h-12 w-12 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+               <div className="h-12 w-12 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <BookOpen className="h-6 w-6" />
                </div>
                <span className="text-xs font-bold text-muted-foreground uppercase">{t('stats.lessons')}</span>
              </div>
-             <p className="text-4xl font-black text-foreground">{totalCompleted}</p>
+             <p className="text-5xl font-black text-foreground group-hover:text-blue-500 transition-colors">{totalCompleted}</p>
           </div>
-          <div className="rounded-3xl border border-border bg-card p-8 shadow-xl">
+          <div className="group rounded-3xl border border-border bg-card/60 backdrop-blur-sm p-8 shadow-xl hover:shadow-2xl hover:shadow-orange-500/10 hover:border-orange-500/30 hover:-translate-y-1 transition-all duration-300">
              <div className="flex items-center gap-4 mb-4">
-               <div className="h-12 w-12 rounded-2xl bg-orange-500/10 text-orange-600 flex items-center justify-center">
+               <div className="h-12 w-12 rounded-2xl bg-orange-500/10 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Flame className="h-6 w-6" />
                </div>
                <span className="text-xs font-bold text-muted-foreground uppercase">{t('stats.streak')}</span>
              </div>
-             <p className="text-4xl font-black text-foreground">{streak} {streak === 1 ? t('stats.day') : t('stats.days')}</p>
+             <p className="text-5xl font-black text-foreground group-hover:text-orange-500 transition-colors">{streak} <span className="text-xl text-muted-foreground">{streak === 1 ? t('stats.day') : t('stats.days')}</span></p>
           </div>
-          <div className="rounded-3xl border border-border bg-card p-8 shadow-xl">
+          <div className="group rounded-3xl border border-border bg-card/60 backdrop-blur-sm p-8 shadow-xl hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30 hover:-translate-y-1 transition-all duration-300">
              <div className="flex items-center gap-4 mb-4">
-               <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+               <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Layers className="h-6 w-6" />
                </div>
                <span className="text-xs font-bold text-muted-foreground uppercase">{t('stats.paths')}</span>
              </div>
-             <p className="text-4xl font-black text-foreground">{activePaths.length}</p>
+             <p className="text-5xl font-black text-foreground group-hover:text-indigo-500 transition-colors">{activePaths.length}</p>
           </div>
-          <div className="rounded-3xl border border-border bg-card p-8 shadow-xl bg-gradient-to-br from-blue-600 to-indigo-700">
-             <div className="flex items-center gap-4 mb-4">
-               <div className="h-12 w-12 rounded-2xl bg-white/20 text-white flex items-center justify-center">
+          <div className="group rounded-3xl border border-blue-500/30 bg-gradient-to-br from-blue-600 to-indigo-700 p-8 shadow-[0_0_40px_-10px_rgba(59,130,246,0.5)] hover:shadow-[0_0_60px_-15px_rgba(59,130,246,0.7)] hover:-translate-y-1 transition-all duration-300 text-white relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-8 w-full h-full bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
+             <div className="flex items-center gap-4 mb-4 relative z-10">
+               <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Star className="h-6 w-6" />
                </div>
                <span className="text-xs font-bold text-blue-100 uppercase">{t('stats.skill')}</span>
              </div>
-             <p className="text-2xl font-black text-white uppercase italic">{skillLevel}</p>
+             <p className="text-3xl font-black uppercase italic relative z-10 break-words">{t(`levels.${skillLevel}`)}</p>
           </div>
         </div>
 
@@ -239,7 +246,7 @@ export default async function LearnerDashboard({ params }: { params: Promise<{ l
            </div>
 
            {/* Sidebar: Resources & Achievements */}
-           <div className="lg:col-span-1 space-y-8">
+           <div className="lg:col-span-1 flex flex-col gap-8">
               {/* Resources */}
               <div className="rounded-3xl border border-border bg-card p-8 shadow-xl">
                  <h2 className="text-xl font-black text-foreground uppercase tracking-tight mb-6">{t('tools.title')}</h2>
@@ -273,7 +280,7 @@ export default async function LearnerDashboard({ params }: { params: Promise<{ l
               </div>
 
               {/* Achievements */}
-              <div className="rounded-3xl border border-border bg-card p-8 shadow-xl h-full">
+              <div className="rounded-3xl border border-border bg-card p-8 shadow-xl flex-grow">
                  <h2 className="text-2xl font-black text-foreground uppercase tracking-tight mb-8">{t('badges.title')}</h2>
                  
                  <div className="grid grid-cols-1 gap-4">

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle2, Play, Trophy, Hash, BookOpen, Lock, ChevronRight, Flag, Loader2, Star, Target, Info } from 'lucide-react';
+import { CheckCircle2, Play, Trophy, Hash, BookOpen, Lock, ChevronRight, Flag, Loader2, Star } from 'lucide-react';
 import { Link } from '@/navigation';
 import { useToast } from '@/components/ui/Toast';
 import { useTranslations, useLocale } from 'next-intl';
+import { getLocalizedField } from '@/lib/i18n-db';
 
 interface RoadmapItem {
   articleId: string;
@@ -17,12 +18,16 @@ interface RoadmapItem {
 
 interface RoadmapPhase {
   title: string;
+  title_en?: string;
   description: string;
+  description_en?: string;
   order: number;
   items: RoadmapItem[];
   project?: {
     title: string;
+    title_en?: string;
     requirements: string;
+    requirements_en?: string;
     passing_score: number;
   };
 }
@@ -243,8 +248,8 @@ export default function RoadmapCanvas({
                          <Flag className={`h-6 w-6 ${isPhaseCompleted ? 'text-yellow-400 fill-current' : 'text-current'}`} />
                          <span className="text-sm font-black uppercase tracking-widest opacity-80">{t('phase')} {pIndex + 1}</span>
                       </div>
-                      <h3 className="text-2xl md:text-3xl font-black mb-2">{phase.title}</h3>
-                      {phase.description && <p className="text-sm font-medium opacity-80">{phase.description}</p>}
+                      <h3 className="text-2xl md:text-3xl font-black mb-2">{getLocalizedField(phase, 'title', locale)}</h3>
+                      {phase.description && <p className="text-sm font-medium opacity-80">{getLocalizedField(phase, 'description', locale)}</p>}
                       
                       {/* Phase Progress */}
                       <div className="mt-6">
@@ -292,9 +297,9 @@ export default function RoadmapCanvas({
                         </div>
 
                         {/* Thẻ Bài Học (Card) */}
-                        <div className={`w-full ${isSatellite ? 'md:w-[35%] opacity-80 scale-90' : 'md:w-[45%]'} transition-all duration-300 ${!isLocked ? 'hover:-translate-y-1 hover:shadow-2xl hover:scale-100 hover:opacity-100' : 'opacity-60 grayscale'}`}>
+                        <div className={`w-full ${isSatellite ? 'md:w-[35%] opacity-80 scale-90' : 'md:w-[45%]'} transition-all duration-300 ${isLocked ? 'opacity-60 grayscale' : ''}`}>
                           {isLocked ? (
-                            <div className={`block ${isSatellite ? 'p-4 rounded-2xl' : 'p-6 md:p-8 rounded-[32px]'} bg-card border-2 border-border shadow-md`}>
+                            <div className={`block relative overflow-hidden ${isSatellite ? 'p-4 rounded-2xl' : 'p-6 md:p-8 rounded-[32px]'} bg-card border-2 border-border shadow-md`}>
                               <div className="flex items-center justify-between mb-4">
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-muted text-muted-foreground">
                                   <Lock className="h-3.5 w-3.5" />
@@ -302,20 +307,20 @@ export default function RoadmapCanvas({
                                 </span>
                                 {isSatellite && <span className="text-[10px] font-bold text-muted-foreground uppercase">{t('auxiliary')}</span>}
                               </div>
-                              <h4 className={`${isSatellite ? 'text-lg' : 'text-xl'} font-black text-foreground mb-2 opacity-50`}>{item.title}</h4>
+                              <h4 className={`${isSatellite ? 'text-lg' : 'text-xl'} font-black text-foreground mb-2 opacity-50`}>{getLocalizedField(item, 'title', locale)}</h4>
                             </div>
                           ) : (
                             <Link 
                               href={`/articles/${item.slug}?roadmap=${roadmap.slug}`}
-                              className={`block ${isSatellite ? 'p-4 rounded-2xl border-dashed border-2' : 'p-6 md:p-8 rounded-[32px] border-2 shadow-xl'} ${
+                              className={`block group transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:scale-[1.02] hover:opacity-100 ${isSatellite ? 'p-4 rounded-2xl border-dashed border-2' : 'p-6 md:p-8 rounded-[32px] border-2 shadow-xl'} ${
                                 isCompleted 
-                                  ? 'bg-green-50/50 border-green-500/20 dark:bg-green-950/20' 
+                                  ? 'bg-green-50/80 border-green-500/30 dark:bg-green-950/40 relative overflow-hidden' 
                                   : 'bg-card border-blue-500/30'
                               }`}
                             >
                               <div className="flex items-center justify-between mb-4">
                                 {isCompleted ? (
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400">
                                     <CheckCircle2 className="h-3.5 w-3.5" />
                                     {t('completed')}
                                   </span>
@@ -325,13 +330,13 @@ export default function RoadmapCanvas({
                                     {t('next')}
                                   </span>
                                 )}
-                                <span className={`px-3 py-1 border rounded-xl text-[10px] font-black uppercase tracking-widest ${getDifficultyColor(item.difficulty)}`}>
+                                <span className={`px-3 py-1 border rounded-full text-[10px] font-black uppercase tracking-widest ${getDifficultyColor(item.difficulty)}`}>
                                   {item.difficulty}
                                 </span>
                               </div>
                               
                               <h4 className="text-xl md:text-2xl font-black text-foreground mb-4 leading-tight group-hover:text-blue-600 transition-colors">
-                                {item.title}
+                                {getLocalizedField(item, 'title', locale)}
                               </h4>
                               
                               <div className="flex items-center justify-between mt-auto">
@@ -382,8 +387,8 @@ export default function RoadmapCanvas({
                                 <span className={`text-[10px] font-black uppercase tracking-widest ${isBossLocked ? 'text-muted-foreground' : isApproved ? 'text-green-500' : isPending ? 'text-orange-500' : 'text-red-500'} mb-2`}>
                                    {isBossLocked ? t('boss.locked') : isApproved ? t('boss.approved') : isPending ? t('boss.pending') : isRejected ? t('boss.rejected') : t('boss.title')}
                                 </span>
-                                <h3 className={`text-xl md:text-2xl font-black mb-3 ${isBossLocked ? 'text-muted-foreground' : 'text-foreground'}`}>{phase.project.title}</h3>
-                                <p className="text-sm font-medium text-muted-foreground max-w-sm">{isBossLocked ? t('boss.locked_desc') : phase.project.requirements}</p>
+                                <h3 className={`text-xl md:text-2xl font-black mb-3 ${isBossLocked ? 'text-muted-foreground' : 'text-foreground'}`}>{getLocalizedField(phase.project, 'title', locale)}</h3>
+                                <p className="text-sm font-medium text-muted-foreground max-w-sm">{isBossLocked ? t('boss.locked_desc') : getLocalizedField(phase.project, 'requirements', locale)}</p>
                                 
                                 {isApproved ? (
                                    <div className="mt-6 flex flex-col items-center gap-2">

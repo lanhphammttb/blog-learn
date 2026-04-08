@@ -19,12 +19,16 @@ export default function EditArticle() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [viewMode, setViewMode] = useState<'split' | 'full-preview'>('split');
+  const [editLanguage, setEditLanguage] = useState<'vi' | 'en'>('vi');
   const [allArticles, setAllArticles] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: '',
+    title_en: '',
     slug: '',
     content: '',
+    content_en: '',
     excerpt: '',
+    excerpt_en: '',
     category: 'Grammar',
     difficulty: 'Intermediate',
     series: '',
@@ -53,6 +57,9 @@ export default function EditArticle() {
           const data = await articleRes.json();
           setFormData({
             ...data,
+            title_en: data.title_en || '',
+            content_en: data.content_en || '',
+            excerpt_en: data.excerpt_en || '',
             tags: data.tags || [],
             difficulty: data.difficulty || 'Intermediate',
             series: data.series || '',
@@ -158,21 +165,37 @@ export default function EditArticle() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2 rounded-2xl bg-card p-1 border border-border shadow-sm w-fit">
-          <button
-            onClick={() => setViewMode('split')}
-            className={`flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-xl transition-all ${viewMode === 'split' ? 'bg-blue-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            <Edit3 className="h-4 w-4" />
-            Editor
-          </button>
-          <button
-            onClick={() => setViewMode('full-preview')}
-            className={`flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-xl transition-all ${viewMode === 'full-preview' ? 'bg-blue-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            <Eye className="h-4 w-4" />
-            Full Preview
-          </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex items-center gap-1 rounded-2xl bg-card p-1 border border-border shadow-sm w-fit">
+            <button
+              onClick={() => setEditLanguage('vi')}
+              className={`px-6 py-2 text-sm font-bold rounded-xl transition-all ${editLanguage === 'vi' ? 'bg-indigo-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Tiếng Việt
+            </button>
+            <button
+              onClick={() => setEditLanguage('en')}
+              className={`px-6 py-2 text-sm font-bold rounded-xl transition-all ${editLanguage === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              English
+            </button>
+          </div>
+          <div className="flex items-center gap-2 rounded-2xl bg-card p-1 border border-border shadow-sm w-fit">
+            <button
+              onClick={() => setViewMode('split')}
+              className={`flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-xl transition-all ${viewMode === 'split' ? 'bg-blue-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <Edit3 className="h-4 w-4" />
+              Editor
+            </button>
+            <button
+              onClick={() => setViewMode('full-preview')}
+              className={`flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-xl transition-all ${viewMode === 'full-preview' ? 'bg-blue-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <Eye className="h-4 w-4" />
+              Full Preview
+            </button>
+          </div>
         </div>
       </div>
 
@@ -182,15 +205,15 @@ export default function EditArticle() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {viewMode === 'split' ? (
               <SplitMarkdownEditor
-                value={formData.content}
-                onChange={(val) => setFormData({ ...formData, content: val })}
+                value={editLanguage === 'vi' ? formData.content : formData.content_en}
+                onChange={(val) => setFormData({ ...formData, [editLanguage === 'vi' ? 'content' : 'content_en']: val })}
                 onGenerateAI={generateAIExcerpt}
               />
             ) : (
               <div className="rounded-2xl border border-border bg-card p-8 lg:p-12 shadow-sm min-h-[700px]">
-                <h1 className="text-4xl font-bold text-foreground mb-8 tracking-tight">{formData.title || 'Untitled Lesson'}</h1>
+                <h1 className="text-4xl font-bold text-foreground mb-8 tracking-tight">{(editLanguage === 'vi' ? formData.title : formData.title_en) || 'Untitled Lesson'}</h1>
                 <div className="prose prose-slate dark:prose-invert max-w-none">
-                  <MarkdownRenderer content={formData.content} />
+                  <MarkdownRenderer content={editLanguage === 'vi' ? formData.content : formData.content_en} />
                 </div>
               </div>
             )}
@@ -241,13 +264,13 @@ export default function EditArticle() {
             <div className="space-y-5">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground flex justify-between">
-                  Title
-                  <span className={formData.title.length > 50 ? "text-amber-500" : ""}>{formData.title.length}/60</span>
+                  Title {editLanguage === 'en' && '(English)'}
+                  <span className={(editLanguage === 'vi' ? formData.title.length : formData.title_en.length) > 50 ? "text-amber-500" : ""}>{(editLanguage === 'vi' ? formData.title.length : formData.title_en.length)}/60</span>
                 </label>
                 <input
-                  required
-                  name="title"
-                  value={formData.title}
+                  required={editLanguage === 'vi'}
+                  name={editLanguage === 'vi' ? "title" : "title_en"}
+                  value={editLanguage === 'vi' ? formData.title : formData.title_en}
                   onChange={handleChange}
                   placeholder="Mastering Phrasal Verbs"
                   className="w-full rounded-xl border border-border bg-background p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-muted-foreground/50"
@@ -317,13 +340,13 @@ export default function EditArticle() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground flex justify-between">
-                  Excerpt
-                  <span className={formData.excerpt.length > 150 ? "text-amber-500" : ""}>{formData.excerpt.length}/160</span>
+                  Excerpt {editLanguage === 'en' && '(English)'}
+                  <span className={(editLanguage === 'vi' ? formData.excerpt.length : formData.excerpt_en.length) > 150 ? "text-amber-500" : ""}>{(editLanguage === 'vi' ? formData.excerpt.length : formData.excerpt_en.length)}/160</span>
                 </label>
                 <textarea
-                  required
-                  name="excerpt"
-                  value={formData.excerpt}
+                  required={editLanguage === 'vi'}
+                  name={editLanguage === 'vi' ? "excerpt" : "excerpt_en"}
+                  value={editLanguage === 'vi' ? formData.excerpt : formData.excerpt_en}
                   onChange={handleChange}
                   rows={4}
                   placeholder="Update your article hook..."

@@ -50,7 +50,7 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
   const toggleTask = async (index: number) => {
     if (isSyncing) return;
 
-    let previousIndices = [...completedIndices];
+    const previousIndices = [...completedIndices];
     const isDone = completedIndices.includes(index);
     const newIndices = isDone ? completedIndices.filter((i: number) => i !== index) : [...completedIndices, index];
     

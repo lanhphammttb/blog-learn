@@ -72,10 +72,21 @@
       "prev": "Prev",
       "next": "Next"
     },
+    "achievements": {
+       "first_lesson_title": "Early Bird",
+       "first_lesson_desc": "You completed your first lesson! 🐣"
+    },
     "search": {
       "placeholder": "Quick search...",
       "searching": "Searching...",
       "no_results": "No articles found for \"{query}\""
+    },
+    "status": {
+      "published": "Published",
+      "draft": "Draft",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
     }
   },
   "Lesson": {
@@ -200,6 +211,12 @@
       },
       "complete": "Complete"
     },
+    "levels": {
+      "Beginner": "Beginner",
+      "Elementary": "Elementary",
+      "Intermediate": "Intermediate",
+      "Advanced": "Advanced"
+    },
     "recent_activity": {
       "title": "Recent Activity",
       "completed": "Completed \"{title}\"",
@@ -207,6 +224,13 @@
       "today": "Today",
       "yesterday": "1 day ago",
       "days_ago": "{count} days ago"
+    },
+    "chart": {
+      "title": "Growth Chart",
+      "desc": "Accumulated XP over the last 7 days",
+      "learning": "Learning",
+      "resting": "Resting",
+      "auto_update": "Data automatically updated"
     },
     "tools": {
        "title": "Tools",
@@ -248,5 +272,36 @@
        "next": "Next"
     },
     "stored": "Stored"
+  },
+  "Admin": {
+    "stats": {
+      "total_articles": "Total Articles",
+      "active_roadmaps": "Active Roadmaps",
+      "total_learners": "Total Learners",
+      "pending_submissions": "Pending Submissions",
+      "new_submissions_hint": "new submissions"
+    },
+    "tabs": {
+      "articles": "Articles",
+      "roadmaps": "Roadmaps"
+    },
+    "actions": {
+      "create_new": "Create New",
+      "search_placeholder": "Search {type}...",
+      "delete_confirm": "Are you sure you want to delete this {type}?",
+      "edit": "Edit",
+      "view": "View",
+      "delete": "Delete"
+    },
+    "table": {
+      "title": "Title",
+      "category": "Category",
+      "difficulty": "Difficulty",
+      "date": "Date",
+      "status": "Status",
+      "actions": "Actions",
+      "no_data": "No {type} found. Click \"Create New\" to get started.",
+      "steps": "steps"
+    }
   }
 }

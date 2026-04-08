@@ -1,6 +1,7 @@
 import { Calendar, Tag, ChevronRight, Signal } from 'lucide-react';
 import { Link } from '@/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { getLocalizedField } from '@/lib/i18n-db';
 
 interface ArticleCardProps {
   article: {
@@ -62,12 +63,12 @@ interface ArticleCardProps {
 
         <Link href={`/articles/${article.slug}`} className="hover:text-blue-600 dark:hover:text-blue-400">
           <h3 className="mb-3 text-xl font-semibold leading-tight text-foreground transition-colors group-hover:text-blue-500">
-            {article.title}
+            {getLocalizedField(article, 'title', locale)}
           </h3>
         </Link>
 
         <p className="mb-6 flex-grow text-sm leading-relaxed text-muted-foreground line-clamp-3">
-          {article.excerpt}
+          {getLocalizedField(article, 'excerpt', locale)}
         </p>
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-4">

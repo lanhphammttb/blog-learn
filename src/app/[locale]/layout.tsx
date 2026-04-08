@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -14,14 +14,14 @@ import { Link } from '@/navigation';
 import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const inter = Inter({
+  variable: "--font-geist-sans", // Keep CSS variable name the same so Tailwind config doesn't break
+  subsets: ["latin", "vietnamese"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
 
 export const metadata: Metadata = {
@@ -55,39 +55,15 @@ export default async function RootLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  // Suppress Next-Themes / React 19 false positive warning
-                  var origError = console.error;
-                  console.error = function() {
-                    if (typeof arguments[0] === 'string' && arguments[0].includes('Encountered a script tag')) return;
-                    origError.apply(console, arguments);
-                  };
 
-                  var theme = localStorage.getItem('theme');
-                  var supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
-                  if (!theme && supportDarkMode) theme = 'dark';
-                  if (!theme) theme = 'light';
-                  document.documentElement.classList.add(theme);
-                  document.documentElement.setAttribute('data-theme', theme);
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
-      </head>
       <body 
         className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300"
         suppressHydrationWarning
       >
-        <ThemeProvider
-          key={`theme-${locale}`}
+        <div id="theme-provider-wrapper" suppressHydrationWarning>
+          <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
@@ -96,11 +72,12 @@ export default async function RootLayout({
           <NextIntlClientProvider locale={locale} messages={messages}>
             <AuthProvider>
               <ToastProvider>
-                <Navbar />
-                <AchievementToast />
-                <GlobalNoteWidget />
-                <ScrollToTop />
-                <main className="flex-grow fixed-nav-padding">{children}</main>
+                <div className="flex flex-col flex-grow">
+                  <Navbar />
+                  <AchievementToast />
+                  <GlobalNoteWidget />
+                  <ScrollToTop />
+                  <main className="flex-grow fixed-nav-padding">{children}</main>
                 <footer className="border-t border-border py-12 mt-12 bg-muted/20">
                   <div className="mx-auto max-w-7xl px-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
@@ -142,10 +119,12 @@ export default async function RootLayout({
                     </div>
                   </div>
                 </footer>
-              </ToastProvider>
+              </div>
+            </ToastProvider>
             </AuthProvider>
           </NextIntlClientProvider>
         </ThemeProvider>
+        </div>
       </body>
     </html>
   );

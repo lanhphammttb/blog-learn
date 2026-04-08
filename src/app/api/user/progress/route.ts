@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     
     // 1. Try to find an existing progress record for this specific user/roadmap
     // We check both current ID and verified Email
-    let progressDoc = await UserProgress.findOne({
+    const progressDoc = await UserProgress.findOne({
       $or: [
         { userId, roadmapId: resolvedRoadmapId },
         { email: email, roadmapId: resolvedRoadmapId }
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         const lastActiveDay = lastActiveDate ? new Date(lastActiveDate.getFullYear(), lastActiveDate.getMonth(), lastActiveDate.getDate()) : null;
         
         let newStreak = progressDoc.streak || 0;
-        let newXP = (progressDoc.xp || 0) + 10; // +10 XP for article
+        const newXP = (progressDoc.xp || 0) + 10; // +10 XP for article
 
         if (!lastActiveDay) {
           newStreak = 1;

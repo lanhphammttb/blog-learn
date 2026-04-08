@@ -3,6 +3,7 @@ import Roadmap from '@/models/Roadmap';
 import { Layers, Rocket, Target, ArrowRight, Signal } from 'lucide-react';
 import { Link } from '@/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getLocalizedField } from '@/lib/i18n-db';
 
  export default async function RoadmapsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -49,11 +50,11 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
                   </div>
 
                   <h3 className="mb-4 text-2xl font-bold text-foreground group-hover:text-blue-600 transition-colors">
-                    {roadmap.title}
+                    {getLocalizedField(roadmap, 'title', locale)}
                   </h3>
                   
                   <p className="mb-8 flex-grow text-sm leading-relaxed text-muted-foreground line-clamp-3">
-                    {roadmap.description}
+                    {getLocalizedField(roadmap, 'description', locale)}
                   </p>
 
                   <div className="mt-auto flex items-center justify-between border-t border-border pt-6">

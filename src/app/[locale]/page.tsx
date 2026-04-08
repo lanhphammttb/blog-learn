@@ -7,6 +7,7 @@ import Roadmap from '@/models/Roadmap';
 import SearchBar from '@/components/SearchBar';
 import Pagination from '@/components/Pagination';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getLocalizedField } from '@/lib/i18n-db';
 
 const ARTICLES_PER_PAGE = 9;
 
@@ -100,8 +101,8 @@ export default async function Home({
                       <div className={`mb-4 w-fit px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${map.difficulty === 'Beginner' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
                          {map.difficulty}
                       </div>
-                      <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-blue-600 transition-colors">{map.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-6">{map.description}</p>
+                      <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-blue-600 transition-colors">{getLocalizedField(map, 'title', locale)}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-6">{getLocalizedField(map, 'description', locale)}</p>
                       <div className="mt-auto flex items-center justify-between">
                          <span className="text-xs font-bold text-muted-foreground">{t('lessons_count', { count: map.items.length })}</span>
                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-blue-500 transition-all" />

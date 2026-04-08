@@ -11,6 +11,7 @@ import { auth } from '@/auth';
 import UserProgress from '@/models/UserProgress';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getLocalizedField } from '@/lib/i18n-db';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string; locale: string }> }): Promise<Metadata> {
   const { slug, locale } = await params;
@@ -21,9 +22,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: 'Roadmap Not Found' };
   }
 
+  const title = getLocalizedField(roadmap, 'title', locale);
+  const description = getLocalizedField(roadmap, 'description', locale);
+
   return {
-    title: `${roadmap.title} | EnglishHub`,
-    description: roadmap.description || `Learn English with the ${roadmap.title} roadmap`,
+    title: `${title} | EnglishHub`,
+    description: description || `Learn English with the ${title} roadmap`,
   };
 }
 
@@ -124,16 +128,16 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
                  </span>
               </div>
               <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-5xl mb-4">
-                {roadmap.title}
+                {getLocalizedField(roadmap, 'title', locale)}
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-6">
-                {roadmap.description}
+                {getLocalizedField(roadmap, 'description', locale)}
               </p>
 
               {roadmap.target_outcome && (
                 <div className="inline-flex items-center gap-2 rounded-2xl bg-yellow-500/10 px-4 py-2 text-sm font-bold text-yellow-700 dark:text-yellow-400 ring-1 ring-yellow-500/20">
                   <Trophy className="h-4 w-4" />
-                  <span>{t('details.target')}: {roadmap.target_outcome}</span>
+                  <span>{t('details.target')}: {getLocalizedField(roadmap, 'target_outcome', locale)}</span>
                 </div>
               )}
             </div>

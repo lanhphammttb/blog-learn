@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import { Link } from '@/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { getLocalizedField } from '@/lib/i18n-db';
 
 interface SearchResult {
   _id: string;
@@ -20,6 +21,8 @@ export default function SearchBar() {
   const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const t = useTranslations('Common.search');
+  const commonT = useTranslations('Common');
+  const locale = useLocale();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -90,7 +93,7 @@ export default function SearchBar() {
                   className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                 >
                   <div>
-                    <p className="text-sm font-bold text-foreground">{article.title}</p>
+                    <p className="text-sm font-bold text-foreground">{getLocalizedField(article, 'title', locale)}</p>
                     <p className="text-[10px] text-muted-foreground uppercase">{article.category}</p>
                   </div>
                   {article.difficulty && (
@@ -99,7 +102,7 @@ export default function SearchBar() {
                       article.difficulty === 'Advanced' ? 'bg-red-500/10 text-red-500' :
                       'bg-yellow-500/10 text-yellow-500'
                     }`}>
-                      {article.difficulty}
+                      {commonT(`status.${article.difficulty.toLowerCase()}`)}
                     </span>
                   )}
                 </Link>

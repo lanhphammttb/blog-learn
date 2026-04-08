@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
 
-    let query: any = {};
+    const query: any = {};
     if (search) {
       query.title = { $regex: search, $options: 'i' };
       query.isPublished = true;
