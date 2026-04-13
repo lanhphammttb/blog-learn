@@ -74,23 +74,21 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
   let completedProjects: string[] = [];
   let projectSubmissions: any[] = [];
   if (session?.user) {
-    const userId = (session.user as any).id;
-    const providerId = (session.user as any).providerId;
+    const userId = session.user.id;
     const email = session.user.email;
-    
-    // Query ONLY the progress record for THIS specific roadmap
+
     const progress = await UserProgress.findOne({
       $or: [
-        { userId: { $in: [userId, providerId].filter(Boolean) } },
-        ...(email ? [{ email }] : [])
+        { userId },
+        ...(email ? [{ email }] : []),
       ],
-      roadmapId: roadmapData._id
+      roadmapId: roadmapData._id,
     }).lean();
     
     if (progress) {
-      completedArticleIds = (progress.completedArticles || []).map((id: any) => id.toString());
+      completedArticleIds = (progress.completedArticles || []).map((id) => id.toString());
       completedProjects = progress.completedProjects || [];
-      projectSubmissions = (progress as any).projectSubmissions || [];
+      projectSubmissions = progress.projectSubmissions || [];
     }
   }
 
@@ -161,7 +159,7 @@ export default async function RoadmapDetailPage({ params }: { params: Promise<{ 
               alt="" 
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 via-background to-background" />
+            <div className="absolute inset-0 bg-linear-to-b from-blue-600/10 via-background to-background" />
           </div>
         )}
       </div>

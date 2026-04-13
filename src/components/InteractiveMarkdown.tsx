@@ -241,7 +241,7 @@ const InteractiveMarkdown = ({
               }
 
               if (index === -1) {
-                return <input {...props} className="task-checkpoint opacity-0 h-0 w-0" />;
+                return null;
               }
 
               const isDone = completedTasks.includes(index);

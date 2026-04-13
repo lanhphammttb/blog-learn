@@ -21,19 +21,24 @@ export async function GET(request: Request) {
 
   try {
     await dbConnect();
+    const userId = session.user.id;
+
     if (roadmapId) {
+      if (!mongoose.Types.ObjectId.isValid(roadmapId)) {
+        return NextResponse.json({ error: 'Invalid roadmapId' }, { status: 400 });
+      }
       const progress = await UserProgress.findOne({
-        userId: (session.user as any).id,
+        userId,
         roadmapId: new mongoose.Types.ObjectId(roadmapId),
       });
       return NextResponse.json(progress?.completedArticles || []);
     } else {
-       // All progress
-       const allProgress = await UserProgress.find({ userId: (session.user as any).id });
-       return NextResponse.json(allProgress);
+      const allProgress = await UserProgress.find({ userId });
+      return NextResponse.json(allProgress);
     }
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch progress';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -49,87 +54,84 @@ export async function POST(request: Request) {
 
   const { articleId, roadmapId, completed } = await request.json();
 
+  if (!roadmapId || !mongoose.Types.ObjectId.isValid(roadmapId)) {
+    return NextResponse.json({ error: 'roadmapId is required and must be a valid ObjectId' }, { status: 400 });
+  }
+  if (!articleId || !mongoose.Types.ObjectId.isValid(articleId)) {
+    return NextResponse.json({ error: 'articleId is required and must be a valid ObjectId' }, { status: 400 });
+  }
+
   try {
     await dbConnect();
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const email = session.user.email;
-    const resolvedRoadmapId = roadmapId 
-      ? new mongoose.Types.ObjectId(roadmapId) 
-      : new mongoose.Types.ObjectId('000000000000000000000000');
-    
-    console.log(`[DEBUG] API Progress: Updating for user: ${userId}, email: ${email}, roadmap: ${resolvedRoadmapId}, article: ${articleId}, completed: ${completed}`);
-    
-    // 1. Try to find an existing progress record for this specific user/roadmap
-    // We check both current ID and verified Email
+    const resolvedRoadmapId = new mongoose.Types.ObjectId(roadmapId);
+
     const progressDoc = await UserProgress.findOne({
       $or: [
         { userId, roadmapId: resolvedRoadmapId },
-        { email: email, roadmapId: resolvedRoadmapId }
-      ].filter(f => f.userId || f.email)
+        ...(email ? [{ email, roadmapId: resolvedRoadmapId }] : []),
+      ],
     });
 
-    const updateData: any = {
+    const updateData = {
       userId,
-      email: email || undefined,
-      lastUpdated: new Date()
+      email: email ?? undefined,
+      lastUpdated: new Date(),
     };
 
     if (completed) {
-      // XP & Streak Logic
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
+
       if (progressDoc) {
         const lastActiveDate = progressDoc.lastActive ? new Date(progressDoc.lastActive) : null;
-        const lastActiveDay = lastActiveDate ? new Date(lastActiveDate.getFullYear(), lastActiveDate.getMonth(), lastActiveDate.getDate()) : null;
-        
+        const lastActiveDay = lastActiveDate
+          ? new Date(lastActiveDate.getFullYear(), lastActiveDate.getMonth(), lastActiveDate.getDate())
+          : null;
+
         let newStreak = progressDoc.streak || 0;
-        const newXP = (progressDoc.xp || 0) + 10; // +10 XP for article
 
         if (!lastActiveDay) {
           newStreak = 1;
         } else {
           const diffDays = Math.floor((today.getTime() - lastActiveDay.getTime()) / (1000 * 60 * 60 * 24));
           if (diffDays === 1) {
-            newStreak += 1; // Continuous streak
+            newStreak += 1;
           } else if (diffDays > 1) {
-            newStreak = 1; // Streak broken
+            newStreak = 1;
           }
-          // if diffDays === 0, keep streak
+          // diffDays === 0: same day, keep streak
         }
 
         await UserProgress.findByIdAndUpdate(progressDoc._id, {
           ...updateData,
           $addToSet: { completedArticles: new mongoose.Types.ObjectId(articleId) },
-          $set: { 
-            streak: newStreak, 
-            lastActive: now 
-          }
+          $set: { streak: newStreak, lastActive: now },
         });
-        await awardXp(userId, resolvedRoadmapId, 20); // Award XP and history
+        await awardXp(userId, resolvedRoadmapId, 20);
       } else {
-        // Create new progress record
         await UserProgress.create({
           ...updateData,
           roadmapId: resolvedRoadmapId,
           completedArticles: [new mongoose.Types.ObjectId(articleId)],
           streak: 1,
-          lastActive: now
+          lastActive: now,
         });
-        await awardXp(userId, resolvedRoadmapId, 20); // Award XP and history
+        await awardXp(userId, resolvedRoadmapId, 20);
       }
     } else {
       if (progressDoc) {
         await UserProgress.findByIdAndUpdate(progressDoc._id, {
           ...updateData,
           $pull: { completedArticles: new mongoose.Types.ObjectId(articleId) },
-          // No XP reduction for un-completing for now to avoid complexity
         });
       }
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update progress';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

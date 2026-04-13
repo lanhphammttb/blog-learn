@@ -15,15 +15,21 @@ export default function Flashcard({ word, phonetic, definition, audioUrl, onPlay
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
-    <div 
-      className="group perspective-1000 w-full max-w-sm mx-auto h-96 cursor-pointer"
+    <div
+      className="w-full max-w-sm mx-auto h-96 cursor-pointer"
+      style={{ perspective: '1000px' }}
       onClick={() => setIsFlipped(!isFlipped)}
     >
-      <div 
-        className={`relative w-full h-full rounded-[32px] transition-transform duration-700 preserve-3d shadow-2xl ${isFlipped ? 'rotate-y-180' : ''}`}
+      <div
+        className="relative w-full h-full rounded-[32px] shadow-2xl"
+        style={{
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.7s',
+          transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+        }}
       >
         {/* Mặt trước: Tiếng Anh */}
-        <div className="absolute inset-0 w-full h-full backface-hidden rounded-[32px] bg-card border-4 border-border/50  flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-card to-muted/20">
+        <div className="absolute inset-0 w-full h-full rounded-[32px] bg-card border-4 border-border/50 flex flex-col items-center justify-center p-8 text-center bg-linear-to-br from-card to-muted/20" style={{ backfaceVisibility: 'hidden' }}>
              
              {/* Nút Audio chặn sự kiện lật thẻ */}
              <button 
@@ -49,7 +55,7 @@ export default function Flashcard({ word, phonetic, definition, audioUrl, onPlay
         </div>
 
         {/* Mặt sau: Nghĩa / Ví dụ */}
-        <div className="absolute inset-0 w-full h-full backface-hidden rounded-[32px] bg-blue-600 border-4 border-blue-500 shadow-[0_20px_50px_rgba(37,99,235,0.4)] rotate-y-180 flex flex-col items-center justify-center p-8 text-center text-white">
+        <div className="absolute inset-0 w-full h-full rounded-[32px] bg-blue-600 border-4 border-blue-500 shadow-[0_20px_50px_rgba(37,99,235,0.4)] flex flex-col items-center justify-center p-8 text-center text-white" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
              
              <h3 className="text-2xl font-bold mb-6 font-serif opacity-90 leading-tight">
                Định nghĩa

@@ -49,6 +49,7 @@ export default function AdminSubmissions() {
   }, []);
 
   const handleReview = async (id: string, bossId: string, status: 'approved' | 'rejected') => {
+    if (submittingReview !== null) return;
     setSubmittingReview(bossId);
     try {
       const res = await fetch('/api/admin/submissions', {

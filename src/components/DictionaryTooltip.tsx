@@ -104,15 +104,17 @@ export default function DictionaryTooltip({ articleId }: { articleId?: string })
 
     try {
       const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
-      if (!res.ok) throw new Error('Word not found');
+      if (res.status === 429) throw new Error('Too many requests. Please wait a moment.');
+      if (res.status === 404) throw new Error('Word not found.');
+      if (!res.ok) throw new Error('Dictionary unavailable.');
       const data = await res.json();
       if (data && data.length > 0) {
         setResult(data[0]);
       } else {
         setError('No definition found.');
       }
-    } catch (err: any) {
-      setError(err.message || 'Error fetching definition.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error fetching definition.');
     } finally {
       setLoading(false);
     }

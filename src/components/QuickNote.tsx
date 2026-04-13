@@ -52,24 +52,17 @@ export default function QuickNote({ isLoggedIn }: { isLoggedIn: boolean }) {
     if (!title.trim() || !content.trim()) return;
 
     setIsSaving(true);
-    const articleId = null;
-    
-    // Nếu đang ở trang bài đọc, tự động lưu articleId
-    if (pathname.includes('/articles/')) {
-        const slug = pathname.split('/').pop();
-        // (Trong thực tế nên GET từ API để lấy chính xác ID, nhưng tạm thời lưu Note tự dính với url/slug là được. 
-        // Tuy nhiên do Schema yêu cầu ObjectId, ta sẽ bỏ qua ở đây. Người dùng vẫn đọc được Title bài chèn vào Note.)
-    }
+    const tags = pathname.includes('/articles/') ? ['Article Note'] : ['Quick Note'];
 
     try {
       const res = await fetch('/api/user/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-           title, 
+           title,
            content,
            color,
-           tags: pathname.includes('/articles/') ? ['Article Note'] : ['Quick Note']
+           tags,
         })
       });
 

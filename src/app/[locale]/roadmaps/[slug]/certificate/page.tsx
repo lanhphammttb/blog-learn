@@ -4,15 +4,16 @@ import Roadmap from '@/models/Roadmap';
 import UserProgress from '@/models/UserProgress';
 import { notFound } from 'next/navigation';
 import { Link } from '@/navigation';
-import { Trophy, Award, Download, Share2, ChevronLeft, Map } from 'lucide-react';
+import { Trophy, Award, ChevronLeft, Map } from 'lucide-react';
+import CertificateActions from './CertificateActions';
 import { getTranslations } from 'next-intl/server';
 
 interface Props {
-  params: { slug: string; locale: string };
+  params: Promise<{ slug: string; locale: string }>;
 }
 
 export default async function CertificatePage({ params }: Props) {
-  const { slug, locale } = params;
+  const { slug, locale } = await params;
   const t = await getTranslations('Certificate');
   const session = await auth();
 
@@ -31,17 +32,22 @@ export default async function CertificatePage({ params }: Props) {
   const roadmap = await Roadmap.findOne({ slug }).lean();
   if (!roadmap) return notFound();
 
-  const progress = await UserProgress.findOne({ 
-    userId: (session.user as any).id, 
-    roadmapId: roadmap._id 
+  const progress = await UserProgress.findOne({
+    userId: session.user.id,
+    roadmapId: roadmap._id,
   }).lean();
 
-  const totalArticles = roadmap.phases.reduce((acc: number, p: any) => acc + (p.items?.length || 0), 0);
+  const totalArticles = roadmap.phases.reduce(
+    (acc: number, p: any) => acc + (p.items?.filter((i: any) => i.is_core !== false).length || 0),
+    0,
+  );
   const completedArticles = progress?.completedArticles?.length || 0;
   const completedBosses = progress?.completedProjects?.length || 0;
   const totalBosses = roadmap.phases.filter((p: any) => p.project?.title).length;
 
-  const isCompleted = completedArticles >= totalArticles && completedBosses >= totalBosses;
+  const allArticlesDone = totalArticles === 0 || completedArticles >= totalArticles;
+  const allBossesDone = totalBosses === 0 || completedBosses >= totalBosses;
+  const isCompleted = allArticlesDone && allBossesDone;
 
   if (!isCompleted) {
     return (
@@ -81,12 +87,7 @@ export default async function CertificatePage({ params }: Props) {
              {t('back_roadmap')}
           </Link>
           <div className="flex gap-4">
-             <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-card border border-border text-sm font-bold hover:bg-muted transition-all shadow-sm">
-                <Share2 className="h-4 w-4" /> {t('share')}
-             </button>
-             <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
-                <Download className="h-4 w-4" /> {t('download')}
-             </button>
+             <CertificateActions />
           </div>
        </div>
 
@@ -112,7 +113,7 @@ export default async function CertificatePage({ params }: Props) {
              <h1 className="text-4xl sm:text-7xl font-black text-foreground mb-4 uppercase tracking-tighter italic">{t('main_title')}</h1>
              <p className="text-lg sm:text-2xl text-muted-foreground font-medium mb-12 italic">{t('sub_title')}</p>
 
-             <div className="w-full max-w-lg h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent mb-12" />
+             <div className="w-full max-w-lg h-px bg-linear-to-r from-transparent via-amber-500/50 to-transparent mb-12" />
 
              <p className="text-md sm:text-xl text-muted-foreground mb-4">{t('recognize')}</p>
              <h3 className="text-3xl sm:text-6xl font-black text-foreground mb-8 uppercase tracking-widest text-blue-600 drop-shadow-sm">

@@ -138,7 +138,7 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
     <>
       <div className="space-y-4">
         {/* User Stats Card */}
-        <div className="rounded-2xl border border-border bg-gradient-to-br from-blue-500/5 to-indigo-500/5 p-4 shadow-sm border-blue-500/20">
+        <div className="rounded-2xl border border-border bg-linear-to-br from-blue-500/5 to-indigo-500/5 p-4 shadow-sm border-blue-500/20">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col items-center gap-1 p-2 rounded-xl bg-card border border-border">
               <Trophy className="h-4 w-4 text-yellow-500" />
@@ -171,7 +171,7 @@ export default function TaskSidebar({ tasks, initialCompletedIndices, initialSta
         <div className="mb-8 space-y-2">
           <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
             <motion.div 
-              className="h-full bg-gradient-to-r from-blue-500 to-indigo-500"
+              className="h-full bg-linear-to-r from-blue-500 to-indigo-500"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ type: "spring", stiffness: 100, damping: 20 }}

@@ -25,8 +25,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Daily English Knowledge - Master English Every Day",
-  description: "A personal platform for learning and storing English materials.",
+  title: {
+    default: 'EnglishHub - Master English Every Day',
+    template: '%s | EnglishHub',
+  },
+  description: 'Nền tảng học tiếng Anh tương tác với roadmap có cấu trúc, bài học thực hành, và hệ thống theo dõi tiến độ.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://englishhub.vercel.app'),
+  openGraph: {
+    type: 'website',
+    siteName: 'EnglishHub',
+    title: 'EnglishHub - Master English Every Day',
+    description: 'Nền tảng học tiếng Anh tương tác với roadmap, gamification và AI grading.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'EnglishHub',
+    description: 'Nền tảng học tiếng Anh tương tác.',
+  },
 };
 
 export default async function RootLayout({

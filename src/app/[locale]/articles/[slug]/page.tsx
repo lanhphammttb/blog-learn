@@ -97,18 +97,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
-  if (session?.user) {
-    const userId = (session.user as any).id;
-    const providerId = (session.user as any).providerId;
+  if (session?.user && roadmapId) {
+    const userId = session.user.id;
     const email = session.user.email;
-    
-    // STRICT Query: must match roadmapId if provided
+
     const progress = await UserProgress.findOne({
       $or: [
-        { userId: { $in: [userId, providerId].filter(Boolean) } },
-        { email: email }
+        { userId },
+        ...(email ? [{ email }] : []),
       ],
-      roadmapId: roadmapId ? new mongoose.Types.ObjectId(roadmapId) : new mongoose.Types.ObjectId("000000000000000000000000")
+      roadmapId: new mongoose.Types.ObjectId(roadmapId),
     }).lean();
 
     if (progress) {

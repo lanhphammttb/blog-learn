@@ -296,7 +296,7 @@ export default function EditArticle() {
                   <select
                     name="difficulty"
                     value={formData.difficulty}
-                    onChange={(e) => setFormData({...formData, difficulty: e.target.value as any})}
+                    onChange={(e) => setFormData({...formData, difficulty: e.target.value as 'Beginner' | 'Intermediate' | 'Advanced'})}
                     className="w-full rounded-xl border border-border bg-background p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   >
                     {['Beginner', 'Intermediate', 'Advanced'].map(d => (

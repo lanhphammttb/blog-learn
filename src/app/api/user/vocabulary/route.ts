@@ -1,66 +1,48 @@
-import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import dbConnect from '@/lib/db';
 import Vocabulary from '@/models/Vocabulary';
-import { auth } from '@/auth';
+import {
+  requireUser, unauthorized, apiError, created, ok, validationError, getErrorMessage, badRequest,
+} from '@/lib/api-helpers';
+
+const VocabSchema = z.object({
+  word: z.string().min(1).max(100),
+  definition: z.string().min(1),
+  phonetic: z.string().optional(),
+  audioUrl: z.string().url().optional().or(z.literal('')),
+});
 
 export async function POST(req: Request) {
+  const user = await requireUser();
+  if (!user) return unauthorized();
+
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized. Please login to save flashcards.' }, { status: 401 });
-    }
-    
-    // Auth provider handling
-    const userId = (session.user as any).id || (session.user as any).providerId;
-    if (!userId) return NextResponse.json({ error: 'User ID missing' }, { status: 400 });
-
-    const body = await req.json();
-    const { word, definition, phonetic, audioUrl } = body;
-
-    if (!word || !definition) {
-      return NextResponse.json({ error: 'Word and definition are required' }, { status: 400 });
-    }
-
     await dbConnect();
+    const body = await req.json();
+    const parsed = VocabSchema.safeParse(body);
+    if (!parsed.success) return validationError(parsed.error.flatten());
 
-    // Upsert to handle saving the same word again
     const vocab = await Vocabulary.findOneAndUpdate(
-      { userId, word: word.toLowerCase() },
-      { 
-        $set: { 
-          definition, 
-          phonetic, 
-          audioUrl
-        } 
-      },
+      { userId: user.id, word: parsed.data.word.toLowerCase() },
+      { $set: { definition: parsed.data.definition, phonetic: parsed.data.phonetic, audioUrl: parsed.data.audioUrl } },
       { returnDocument: 'after', upsert: true }
     );
 
-    return NextResponse.json(vocab, { status: 201 });
-  } catch (error: any) {
-    console.error('Save vocab error:', error);
-    if (error.code === 11000) {
-      return NextResponse.json({ error: 'Word already saved' }, { status: 400 });
-    }
-    return NextResponse.json({ error: 'Failed to save vocabulary' }, { status: 500 });
+    return created(vocab);
+  } catch (error) {
+    return apiError(getErrorMessage(error));
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
+  const user = await requireUser();
+  if (!user) return unauthorized();
+
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    const userId = (session.user as any).id || (session.user as any).providerId;
-    
     await dbConnect();
-    const vocabs = await Vocabulary.find({ userId }).sort({ createdAt: -1 });
-    
-    return NextResponse.json(vocabs);
-  } catch (error: any) {
-    console.error('Get vocab error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    const vocabs = await Vocabulary.find({ userId: user.id }).sort({ createdAt: -1 }).lean();
+    return ok(vocabs);
+  } catch (error) {
+    return apiError(getErrorMessage(error));
   }
 }

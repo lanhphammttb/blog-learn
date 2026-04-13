@@ -36,10 +36,12 @@ export default function AdminDashboard() {
             setTotalCompletions(data.reduce((acc: number, u: any) => acc + u.totalLessons, 0));
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to fetch leaderboard stats:', e);
+      }
     };
     fetchStats();
-    
+
     // Fetch pending submissions count
     const fetchPending = async () => {
        try {
@@ -48,7 +50,9 @@ export default function AdminDashboard() {
              const data = await res.json();
              setPendingCount(data.length);
           }
-       } catch (e) {}
+       } catch (e) {
+         console.error('Failed to fetch pending submissions:', e);
+       }
     };
     fetchPending();
   }, []);

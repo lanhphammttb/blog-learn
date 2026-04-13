@@ -93,6 +93,10 @@ const RoadmapSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// Performance indexes
+RoadmapSchema.index({ isPublished: 1, createdAt: -1 });
+RoadmapSchema.index({ difficulty: 1, isPublished: 1 });
+
 if (mongoose.models.Roadmap) {
   delete mongoose.models.Roadmap;
 }

@@ -208,7 +208,7 @@ export default function RoadmapCanvas({
         />
         
         <div className="space-y-24 py-12">
-          {roadmap.phases?.map((phase, pIndex) => {
+          {[...(roadmap.phases ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((phase, pIndex) => {
            
            const coreItems = phase.items.filter(i => i.is_core !== false);
            const phaseItemIds = new Set(coreItems.map(item => item.articleId));
@@ -255,12 +255,12 @@ export default function RoadmapCanvas({
                       <div className="mt-6">
                          <div className="flex justify-between items-center text-xs font-bold mb-2 opacity-80 uppercase tracking-widest">
                             <span>{t('progress')}</span>
-                            <span>{phaseCompletedCount} / {phase.items.length}</span>
+                            <span>{phaseCompletedCount} / {coreItems.length}</span>
                          </div>
                          <div className="w-full h-3 bg-black/20 dark:bg-white/10 rounded-full overflow-hidden">
-                            <div 
-                               className={`h-full rounded-full transition-all duration-1000 ${isPhaseCompleted ? 'bg-yellow-400' : 'bg-blue-500'}`} 
-                               style={{ width: `${phase.items.length > 0 ? (phaseCompletedCount / phase.items.length) * 100 : 0}%` }}
+                            <div
+                               className={`h-full rounded-full transition-all duration-1000 ${isPhaseCompleted ? 'bg-yellow-400' : 'bg-blue-500'}`}
+                               style={{ width: `${coreItems.length > 0 ? (phaseCompletedCount / coreItems.length) * 100 : 0}%` }}
                             />
                          </div>
                       </div>
@@ -374,14 +374,14 @@ export default function RoadmapCanvas({
 
                    return (
                    <div className="relative flex justify-center mt-16 mb-8 z-20">
-                      <div className={`absolute top-0 bottom-0 left-1/2 w-4 ${isBossLocked ? 'bg-muted/20' : 'bg-gradient-to-b from-blue-500/0 via-red-500/50 to-red-500/0'} -translate-x-1/2 animate-pulse -z-10`}></div>
+                      <div className={`absolute top-0 bottom-0 left-1/2 w-4 ${isBossLocked ? 'bg-muted/20' : 'bg-linear-to-b from-blue-500/0 via-red-500/50 to-red-500/0'} -translate-x-1/2 animate-pulse -z-10`}></div>
                       
-                      <div className={`p-1 min-w-[300px] w-[90%] md:w-[60%] lg:w-[50%] bg-gradient-to-br ${isBossLocked ? 'from-muted to-muted/50' : isApproved ? 'from-green-500 to-emerald-500' : isPending ? 'from-orange-500 to-yellow-500' : 'from-red-500 via-orange-500 to-yellow-500'} rounded-[32px] shadow-[0_10px_40px_rgba(239,68,68,0.1)] ${!isBossLocked && 'hover:scale-105'} transition-all group ${isBossLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}>
+                      <div className={`p-1 min-w-[300px] w-[90%] md:w-[60%] lg:w-[50%] bg-linear-to-br ${isBossLocked ? 'from-muted to-muted/50' : isApproved ? 'from-green-500 to-emerald-500' : isPending ? 'from-orange-500 to-yellow-500' : 'from-red-500 via-orange-500 to-yellow-500'} rounded-[32px] shadow-[0_10px_40px_rgba(239,68,68,0.1)] ${!isBossLocked && 'hover:scale-105'} transition-all group ${isBossLocked ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}>
                           <div className={`bg-card dark:bg-zinc-950 p-6 md:p-8 rounded-[28px] h-full relative overflow-hidden ${isBossLocked && 'grayscale'}`}>
                              <div className={`absolute inset-0 ${isBossLocked ? 'bg-muted/5' : isApproved ? 'bg-green-500/5' : isPending ? 'bg-orange-500/5' : 'bg-red-500/5'} ${!isBossLocked && 'group-hover:bg-red-500/10'} transition-colors`} />
                              
                              <div className="flex flex-col items-center text-center relative z-10">
-                                <div className={`h-16 w-16 mb-4 rounded-2xl bg-gradient-to-br ${isBossLocked ? 'from-muted to-muted-foreground' : isApproved ? 'from-green-500 to-emerald-500' : isPending ? 'from-orange-500 to-yellow-500' : 'from-red-500 to-orange-500'} flex items-center justify-center text-white shadow-xl ${!isBossLocked && 'rotate-[10deg] group-hover:rotate-0'} transition-all duration-300`}>
+                                <div className={`h-16 w-16 mb-4 rounded-2xl bg-linear-to-br ${isBossLocked ? 'from-muted to-muted-foreground' : isApproved ? 'from-green-500 to-emerald-500' : isPending ? 'from-orange-500 to-yellow-500' : 'from-red-500 to-orange-500'} flex items-center justify-center text-white shadow-xl ${!isBossLocked && 'rotate-[10deg] group-hover:rotate-0'} transition-all duration-300`}>
                                    {isBossLocked ? <Lock className="h-8 w-8" /> : isApproved ? <CheckCircle2 className="h-8 w-8" /> : isPending ? <Loader2 className="h-8 w-8 animate-spin" /> : <Trophy className="h-8 w-8" />}
                                 </div>
                                 <span className={`text-[10px] font-black uppercase tracking-widest ${isBossLocked ? 'text-muted-foreground' : isApproved ? 'text-green-500' : isPending ? 'text-orange-500' : 'text-red-500'} mb-2`}>

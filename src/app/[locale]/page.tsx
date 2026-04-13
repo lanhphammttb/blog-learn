@@ -46,7 +46,7 @@ export default async function Home({
     <div className="relative isolate px-6 pt-14 lg:px-8 bg-background">
       {/* Background decoration */}
       <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
-        <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-blue-600 to-indigo-600 opacity-10 dark:opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
+        <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-linear-to-tr from-blue-600 to-indigo-600 opacity-10 dark:opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
       </div>
 
       {/* Grid Pattern Overlay */}
@@ -104,7 +104,7 @@ export default async function Home({
                       <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-blue-600 transition-colors">{getLocalizedField(map, 'title', locale)}</h3>
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-6">{getLocalizedField(map, 'description', locale)}</p>
                       <div className="mt-auto flex items-center justify-between">
-                         <span className="text-xs font-bold text-muted-foreground">{t('lessons_count', { count: map.items.length })}</span>
+                         <span className="text-xs font-bold text-muted-foreground">{t('lessons_count', { count: (map.phases as Array<{ items: unknown[] }>)?.reduce((acc, p) => acc + (p.items?.length ?? 0), 0) ?? 0 })}</span>
                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 group-hover:text-blue-500 transition-all" />
                       </div>
                    </Link>

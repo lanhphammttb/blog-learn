@@ -69,7 +69,7 @@ import { getLocalizedField } from '@/lib/i18n-db';
                   </div>
                 </div>
                 
-                <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-600/5 via-transparent to-indigo-600/5 opacity-0 transition-opacity group-hover:opacity-100" />
+                <div className="absolute inset-0 z-0 bg-linear-to-br from-blue-600/5 via-transparent to-indigo-600/5 opacity-0 transition-opacity group-hover:opacity-100" />
               </Link>
               );
             })}

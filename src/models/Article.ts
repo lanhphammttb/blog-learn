@@ -43,6 +43,12 @@ const ArticleSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// Performance indexes
+ArticleSchema.index({ isPublished: 1, createdAt: -1 });
+ArticleSchema.index({ category: 1, isPublished: 1 });
+ArticleSchema.index({ difficulty: 1, isPublished: 1 });
+ArticleSchema.index({ title: 'text', excerpt: 'text' });
+
 // Prevent re-defining the model if it already exists (Next.js hot reloading)
 const Article: Model<IArticle> = mongoose.models.Article || mongoose.model<IArticle>('Article', ArticleSchema);
 

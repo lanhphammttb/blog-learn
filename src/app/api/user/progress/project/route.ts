@@ -1,68 +1,66 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { z } from 'zod';
 import dbConnect from '@/lib/db';
 import Roadmap from '@/models/Roadmap';
+import { requireUser, unauthorized, apiError, notFound, badRequest, ok, validationError, getErrorMessage, isValidObjectId } from '@/lib/api-helpers';
 import { rateLimit, getClientId, rateLimitResponse } from '@/lib/rateLimit';
-
-// Clean Architecture Imports
 import { SubmitProjectUseCase } from '@/core/use-cases/SubmitProjectUseCase';
 import { MongooseUserProgressRepository } from '@/infrastructure/database/MongooseUserProgressRepository';
 import { GeminiGradeService } from '@/infrastructure/services/GeminiGradeService';
+
+const SubmitSchema = z.object({
+  roadmapId: z.string().min(1),
+  bossId: z.string().min(1),
+  content: z.string().min(1).max(10000),
+  locale: z.enum(['vi', 'en']).default('vi'),
+});
 
 export async function POST(request: Request) {
   const clientId = getClientId(request);
   const { success, resetTime } = rateLimit(`project-post:${clientId}`, { limit: 20, windowSeconds: 60 });
   if (!success) return rateLimitResponse(resetTime);
 
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { roadmapId, bossId, content, locale = 'vi' } = await request.json();
-
-  if (!roadmapId || !bossId) {
-    return NextResponse.json({ error: 'Missing roadmapId or bossId' }, { status: 400 });
-  }
+  const user = await requireUser();
+  if (!user) return unauthorized();
 
   try {
-    await dbConnect();
-    const userId = (session.user as any).id;
-    const email = session.user.email;
+    const body = await request.json();
+    const parsed = SubmitSchema.safeParse(body);
+    if (!parsed.success) return validationError(parsed.error.flatten());
 
-    // Initialize Clean Architecture dependencies
+    const { roadmapId, bossId, content, locale } = parsed.data;
+
+    if (!isValidObjectId(roadmapId)) return badRequest('Invalid roadmapId');
+
+    await dbConnect();
+
+    const roadmap = await Roadmap.findById(roadmapId);
+    if (!roadmap) return notFound('Roadmap');
+
+    const parts = bossId.split('_phase_');
+    const phaseIndex = parseInt(parts[1], 10);
+    const phase = roadmap.phases[phaseIndex];
+
+    if (!phase?.project?.requirements) {
+      return badRequest('Project requirements not found for this phase');
+    }
+
     const progressRepo = new MongooseUserProgressRepository();
     const gradeService = new GeminiGradeService();
     const submitProjectUseCase = new SubmitProjectUseCase(progressRepo, gradeService);
 
-    // Find requirements from Roadmap model (Framework layer)
-    const roadmap = await Roadmap.findById(roadmapId);
-    if (!roadmap) {
-      return NextResponse.json({ error: 'Roadmap not found' }, { status: 404 });
-    }
-
-    const parts = bossId.split('_phase_');
-    const phaseIndex = parseInt(parts[1]);
-    const phase = roadmap.phases[phaseIndex];
-    
-    if (!phase || !phase.project?.requirements) {
-      return NextResponse.json({ error: 'Project requirements not found' }, { status: 400 });
-    }
-
-    // Execute Use Case
     const result = await submitProjectUseCase.execute({
-      userId,
+      userId: user.id,
       roadmapId,
       bossId,
       content,
       requirements: phase.project.requirements,
-      email: email || undefined,
-      locale
+      email: user.email ?? undefined,
+      locale,
     });
 
-    return NextResponse.json(result);
-  } catch (error: any) {
+    return ok(result);
+  } catch (error) {
     console.error('[BOSS_API_ERROR]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(getErrorMessage(error));
   }
 }

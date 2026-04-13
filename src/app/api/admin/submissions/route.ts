@@ -1,100 +1,98 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { z } from 'zod';
 import dbConnect from '@/lib/db';
 import UserProgress from '@/models/UserProgress';
 import Roadmap from '@/models/Roadmap';
+import {
+  requireAdmin, unauthorized, apiError, notFound, ok, validationError, badRequest, getErrorMessage,
+} from '@/lib/api-helpers';
+import { awardXp } from '@/lib/user-progress';
+import Notification from '@/models/Notification';
 import mongoose from 'mongoose';
 
-// Only Admin can access
-async function checkAdmin() {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'admin') {
-    return false;
-  }
-  return true;
-}
+const ReviewSchema = z.object({
+  progressId: z.string().min(1),
+  bossId: z.string().min(1),
+  status: z.enum(['approved', 'rejected', 'pending']),
+  feedback: z.string().optional(),
+});
 
 export async function GET() {
-  if (!(await checkAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const admin = await requireAdmin();
+  if (!admin) return unauthorized();
 
   try {
     await dbConnect();
-    
-    // Find all progress records that have pending submissions
+
     const progressRecords = await UserProgress.find({
-      'projectSubmissions.status': 'pending'
+      'projectSubmissions.status': 'pending',
     }).lean();
 
-    // Enrich with Roadmap details
-    const enrichedSubmissions = await Promise.all(progressRecords.map(async (record) => {
-      const roadmap = await Roadmap.findById(record.roadmapId).select('title').lean();
-      
-      // Filter only pending submissions from this record
-      const pendingOnes = record.projectSubmissions.filter((s:any) => s.status === 'pending');
-      
-      return pendingOnes.map((s:any) => ({
-        ...s,
-        userId: record.userId,
-        userEmail: record.email,
-        roadmapId: record.roadmapId,
-        roadmapTitle: roadmap?.title || 'Unknown Roadmap',
-        progressId: record._id
-      }));
-    }));
+    const enriched = await Promise.all(
+      progressRecords.map(async (record) => {
+        const roadmap = await Roadmap.findById(record.roadmapId).select('title').lean();
+        const pendingOnes = record.projectSubmissions.filter((s) => s.status === 'pending');
+        return pendingOnes.map((s) => ({
+          ...s,
+          userId: record.userId,
+          userEmail: record.email,
+          roadmapId: record.roadmapId,
+          roadmapTitle: roadmap?.title ?? 'Unknown Roadmap',
+          progressId: record._id,
+        }));
+      })
+    );
 
-    // Flatten the array
-    const flatSubmissions = enrichedSubmissions.flat();
-
-    return NextResponse.json(flatSubmissions);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return ok(enriched.flat());
+  } catch (error) {
+    return apiError(getErrorMessage(error));
   }
 }
 
 export async function POST(request: Request) {
-  if (!(await checkAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const admin = await requireAdmin();
+  if (!admin) return unauthorized();
 
   try {
     await dbConnect();
-    const { progressId, bossId, status, feedback } = await request.json();
+    const body = await request.json();
+    const parsed = ReviewSchema.safeParse(body);
+    if (!parsed.success) return validationError(parsed.error.flatten());
 
-    if (!progressId || !bossId || !status) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
+    const { progressId, bossId, status, feedback } = parsed.data;
 
     const progress = await UserProgress.findById(progressId);
-    if (!progress) {
-      return NextResponse.json({ error: 'Progress record not found' }, { status: 404 });
-    }
+    if (!progress) return notFound('Progress record');
 
-    // Find the submission in the array
-    const submissionIndex = progress.projectSubmissions.findIndex(s => s.bossId === bossId);
-    if (submissionIndex === -1) {
-      return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
-    }
+    const idx = progress.projectSubmissions.findIndex((s) => s.bossId === bossId);
+    if (idx === -1) return notFound('Submission');
 
-    // Update status and feedback
-    progress.projectSubmissions[submissionIndex].status = status;
-    progress.projectSubmissions[submissionIndex].feedback = feedback;
+    progress.projectSubmissions[idx].status = status;
+    if (feedback) progress.projectSubmissions[idx].feedback = feedback;
 
-    // If Approved: 
-    // 1. Award +50 XP
-    // 2. Add to completedProjects to allow unlocking next phase
     if (status === 'approved') {
-       progress.xp = (progress.xp || 0) + 50;
-       if (!progress.completedProjects.includes(bossId)) {
-          progress.completedProjects.push(bossId);
-       }
+      if (!progress.completedProjects.includes(bossId)) {
+        progress.completedProjects.push(bossId);
+      }
+      // Award XP via the awardXp helper for consistent history tracking
+      await awardXp(progress.userId, progress.roadmapId as mongoose.Types.ObjectId, 50);
     }
 
     await progress.save();
 
-    return NextResponse.json({ success: true, message: `Submission ${status}` });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // Send in-app notification to the learner
+    const roadmap = await Roadmap.findById(progress.roadmapId).select('title slug').lean();
+    await Notification.create({
+      userId: progress.userId,
+      title: status === 'approved' ? 'Boss Battle Approved! 🏆' : 'Boss Battle Feedback',
+      message: status === 'approved'
+        ? `Your submission for "${roadmap?.title ?? 'the roadmap'}" has been approved. +50 XP earned!`
+        : `Your submission for "${roadmap?.title ?? 'the roadmap'}" needs revision. Check the feedback.`,
+      type: 'boss_review',
+      link: roadmap?.slug ? `/roadmaps/${roadmap.slug}` : undefined,
+    });
+
+    return ok({ success: true, message: `Submission ${status}` });
+  } catch (error) {
+    return apiError(getErrorMessage(error));
   }
 }

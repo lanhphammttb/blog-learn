@@ -1,63 +1,52 @@
-import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import dbConnect from '@/lib/db';
 import Highlight from '@/models/Highlight';
-import { auth } from '@/auth';
+import {
+  requireUser, unauthorized, apiError, created, ok, validationError, badRequest, getErrorMessage,
+} from '@/lib/api-helpers';
+
+const HighlightSchema = z.object({
+  articleId: z.string().min(1),
+  textSnippet: z.string().min(1),
+  note: z.string().optional(),
+  colorCode: z.string().optional(),
+});
 
 export async function POST(req: Request) {
+  const user = await requireUser();
+  if (!user) return unauthorized();
+
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    const userId = (session.user as any).id || (session.user as any).providerId;
-    
-    const body = await req.json();
-    const { articleId, textSnippet, note, colorCode } = body;
-
-    if (!articleId || !textSnippet) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
     await dbConnect();
+    const body = await req.json();
+    const parsed = HighlightSchema.safeParse(body);
+    if (!parsed.success) return validationError(parsed.error.flatten());
 
-    // If exact text matches for the same user + article, update the note. Otherwise create new.
     const highlight = await Highlight.findOneAndUpdate(
-      { userId, articleId, textSnippet },
-      { $set: { note, colorCode: colorCode || 'yellow' } },
+      { userId: user.id, articleId: parsed.data.articleId, textSnippet: parsed.data.textSnippet },
+      { $set: { note: parsed.data.note, colorCode: parsed.data.colorCode ?? 'yellow' } },
       { returnDocument: 'after', upsert: true }
     );
 
-    return NextResponse.json(highlight, { status: 201 });
-  } catch (error: any) {
-    console.error('Highlight save error', error);
-    return NextResponse.json({ error: 'Failed to save highlight' }, { status: 500 });
+    return created(highlight);
+  } catch (error) {
+    return apiError(getErrorMessage(error));
   }
 }
 
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const articleId = searchParams.get('articleId');
+  if (!articleId) return badRequest('articleId is required');
+
+  const user = await requireUser();
+  if (!user) return ok([]); // Return empty for anonymous users
+
   try {
-    const { searchParams } = new URL(req.url);
-    const articleId = searchParams.get('articleId');
-    
-    if (!articleId) {
-      return NextResponse.json({ error: 'articleId required' }, { status: 400 });
-    }
-
-    const session = await auth();
-    if (!session?.user) {
-       // Return empty array for anonymous users instead of error, so front-end doesn't crash
-      return NextResponse.json([]);
-    }
-    
-    const userId = (session.user as any).id || (session.user as any).providerId;
-
     await dbConnect();
-    const highlights = await Highlight.find({ userId, articleId }).lean();
-    
-    return NextResponse.json(highlights);
-  } catch (error: any) {
-    console.error('Highlight GET error', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const highlights = await Highlight.find({ userId: user.id, articleId }).lean();
+    return ok(highlights);
+  } catch (error) {
+    return apiError(getErrorMessage(error));
   }
 }

@@ -87,7 +87,7 @@ interface ArticleCardProps {
       </div>
       
       {/* Decorative gradient background on hover */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-600/5 via-transparent to-indigo-600/5 opacity-0 transition-opacity group-hover:opacity-100 dark:from-blue-600/10 dark:to-indigo-600/10" />
+      <div className="absolute inset-0 z-0 bg-linear-to-br from-blue-600/5 via-transparent to-indigo-600/5 opacity-0 transition-opacity group-hover:opacity-100 dark:from-blue-600/10 dark:to-indigo-600/10" />
     </div>
   );
 };

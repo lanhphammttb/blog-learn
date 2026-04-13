@@ -1,43 +1,52 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { z } from 'zod';
 import dbConnect from '@/lib/db';
 import Notification from '@/models/Notification';
+import {
+  requireUser, unauthorized, apiError, ok, validationError, getErrorMessage,
+} from '@/lib/api-helpers';
+
+const MarkReadSchema = z.object({
+  notificationId: z.string().optional(),
+  all: z.boolean().optional(),
+});
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const user = await requireUser();
+  if (!user) return unauthorized();
 
   try {
     await dbConnect();
-    const userId = (session.user as any).id;
-    const notifications = await Notification.find({ userId })
+    const notifications = await Notification.find({ userId: user.id })
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
-
-    return NextResponse.json(notifications);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return ok(notifications);
+  } catch (error) {
+    return apiError(getErrorMessage(error));
   }
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const user = await requireUser();
+  if (!user) return unauthorized();
 
   try {
     await dbConnect();
-    const { notificationId, all } = await request.json();
-    const userId = (session.user as any).id;
+    const body = await request.json();
+    const parsed = MarkReadSchema.safeParse(body);
+    if (!parsed.success) return validationError(parsed.error.flatten());
 
-    if (all) {
-      await Notification.updateMany({ userId, isRead: false }, { isRead: true });
-    } else if (notificationId) {
-      await Notification.updateOne({ _id: notificationId, userId }, { isRead: true });
+    if (parsed.data.all) {
+      await Notification.updateMany({ userId: user.id, isRead: false }, { isRead: true });
+    } else if (parsed.data.notificationId) {
+      await Notification.updateOne(
+        { _id: parsed.data.notificationId, userId: user.id },
+        { isRead: true }
+      );
     }
 
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return ok({ success: true });
+  } catch (error) {
+    return apiError(getErrorMessage(error));
   }
 }

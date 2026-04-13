@@ -34,7 +34,7 @@ export default async function LearnerDashboard({ params }: { params: Promise<{ l
   await dbConnect();
   // Force Mongoose to register the model in Turbopack environments
   if (!Roadmap) console.warn('Roadmap model init failed');
-  const userId = (session.user as any).id;
+  const userId = session.user.id;
 
   // Fetch all user progress
   const allProgress = await UserProgress.find({ userId }).populate('roadmapId').lean();
@@ -51,7 +51,7 @@ export default async function LearnerDashboard({ params }: { params: Promise<{ l
   // Aggregated XP History
   const xpHistoryMap: Record<string, number> = {};
   allProgress.forEach(p => {
-    p.xpHistory?.forEach((h: any) => {
+    (p.xpHistory ?? []).forEach((h) => {
       xpHistoryMap[h.date] = (xpHistoryMap[h.date] || 0) + h.xp;
     });
   });
@@ -143,7 +143,7 @@ export default async function LearnerDashboard({ params }: { params: Promise<{ l
              </div>
              <p className="text-5xl font-black text-foreground group-hover:text-indigo-500 transition-colors">{activePaths.length}</p>
           </div>
-          <div className="group rounded-3xl border border-blue-500/30 bg-gradient-to-br from-blue-600 to-indigo-700 p-8 shadow-[0_0_40px_-10px_rgba(59,130,246,0.5)] hover:shadow-[0_0_60px_-15px_rgba(59,130,246,0.7)] hover:-translate-y-1 transition-all duration-300 text-white relative overflow-hidden">
+          <div className="group rounded-3xl border border-blue-500/30 bg-linear-to-br from-blue-600 to-indigo-700 p-8 shadow-[0_0_40px_-10px_rgba(59,130,246,0.5)] hover:shadow-[0_0_60px_-15px_rgba(59,130,246,0.7)] hover:-translate-y-1 transition-all duration-300 text-white relative overflow-hidden">
              <div className="absolute top-0 right-0 p-8 w-full h-full bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
              <div className="flex items-center gap-4 mb-4 relative z-10">
                <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -168,30 +168,35 @@ export default async function LearnerDashboard({ params }: { params: Promise<{ l
                  
                  {activePaths.length > 0 ? (
                     <div className="space-y-4">
-                       {activePaths.map((p: any) => (
-                          <Link 
-                            key={p._id} 
-                            href={`/roadmaps/${(p.roadmapId as any).slug}`}
+                       {activePaths.map((p) => {
+                          const rm = p.roadmapId as unknown as { slug: string; title: string; phases: Array<{ items: unknown[] }> };
+                          const totalItems = rm.phases?.reduce((acc, ph) => acc + (ph.items?.length ?? 0), 0) ?? 0;
+                          const pct = Math.round((p.completedArticles.length / Math.max(1, totalItems)) * 100);
+                          return (
+                          <Link
+                            key={p._id?.toString()}
+                            href={`/roadmaps/${rm.slug}`}
                             className="flex items-center gap-6 p-6 rounded-3xl border border-border bg-card hover:border-blue-500/50 hover:shadow-lg transition-all"
                           >
                              <div className="h-16 w-16 flex-shrink-0 rounded-2xl bg-muted flex items-center justify-center">
                                 <Target className="h-8 w-8 text-blue-500" />
                              </div>
                              <div className="flex-grow">
-                                <h3 className="font-bold text-lg text-foreground mb-2">{(p.roadmapId as any).title}</h3>
+                                <h3 className="font-bold text-lg text-foreground mb-2">{rm.title}</h3>
                                 <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                                   <div 
-                                      className="h-full bg-blue-600 transition-all duration-1000" 
-                                      style={{ width: `${Math.round((p.completedArticles.length / (p.roadmapId as any).items.length) * 100)}%` }}
+                                   <div
+                                      className="h-full bg-blue-600 transition-all duration-1000"
+                                      style={{ width: `${pct}%` }}
                                    />
                                 </div>
                              </div>
                              <div className="hidden sm:flex flex-col items-end">
-                                <span className="text-sm font-black text-foreground">{Math.round((p.completedArticles.length / (p.roadmapId as any).items.length) * 100)}%</span>
+                                <span className="text-sm font-black text-foreground">{pct}%</span>
                                 <span className="text-[10px] text-muted-foreground uppercase">{t('active_paths.complete')}</span>
                              </div>
                           </Link>
-                       ))}
+                          );
+                       })}
                     </div>
                  ) : (
                     <div className="rounded-3xl border-2 border-dashed border-border p-12 text-center">

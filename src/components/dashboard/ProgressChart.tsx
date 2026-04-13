@@ -20,7 +20,7 @@ export default function ProgressChart({ data }: Props) {
   const last7Days = [...Array(7)].map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const found = data.find(item => item.date === dateStr);
     return {
       date: dateStr,
@@ -59,7 +59,7 @@ export default function ProgressChart({ data }: Props) {
                     
                     {/* Bar */}
                     <div 
-                      className={`w-full max-w-[32px] rounded-t-xl transition-all duration-1000 ease-out border-b-2 border-blue-700/20 ${day.xp > 0 ? 'bg-gradient-to-t from-blue-600 to-blue-400' : 'bg-muted/30'}`}
+                      className={`w-full max-w-[32px] rounded-t-xl transition-all duration-1000 ease-out border-b-2 border-blue-700/20 ${day.xp > 0 ? 'bg-linear-to-t from-blue-600 to-blue-400' : 'bg-muted/30'}`}
                       style={{ height: `${Math.max(height, 5)}%` }}
                     />
                  </div>

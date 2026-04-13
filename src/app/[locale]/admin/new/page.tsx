@@ -160,7 +160,7 @@ export default function NewArticle() {
       setFormData((prev) => ({ ...prev, [name]: checked }));
     } else {
       if (name === 'title') {
-        const slugValue = value.toLowerCase().replace(/[^a-z0-0]+/g, '-').replace(/^-+|-+$/g, '');
+        const slugValue = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
         setFormData((prev) => ({ ...prev, [name]: value, slug: slugValue }));
         return;
       }
@@ -315,7 +315,7 @@ export default function NewArticle() {
                   <select
                     name="difficulty"
                     value={formData.difficulty}
-                    onChange={(e) => setFormData({...formData, difficulty: e.target.value as any})}
+                    onChange={(e) => setFormData({...formData, difficulty: e.target.value as 'Beginner' | 'Intermediate' | 'Advanced'})}
                     className="w-full rounded-xl border border-border bg-background p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   >
                     {['Beginner', 'Intermediate', 'Advanced'].map(d => (
